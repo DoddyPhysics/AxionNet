@@ -1,7 +1,0 @@
-*.npy
-*.png
-*.pdf
-*.dat
-Chains/Old
-.DS_Store
-spectralConvergence/
