@@ -97,7 +97,7 @@ class ModelClass(object):
 			kD = reduce(np.dot, [p, k2, pT]) #diagonalisation of Kahler metric
 			kD[kD < 1*10**-13] = 0 # removal of computational error terms in off diagonal elements
 			kDr = np.zeros((n, n))#creation of empty 3x3 matrix
-			np.fill_diagonal(kDr, (1/((2**0.5)*np.sqrt(ev))))# matrix for absolving eigen values of kahler metric into axion fields
+			np.fill_diagonal(kDr, (1./np.sqrt(ev)))# matrix for absolving eigen values of kahler metric into axion fields
 			#kDr[kDr > 1*10**23] = 0 # remove computational errors in reciprocal matrix
 			kDrT = kDr.transpose() # trasnpose of kDr matrix
 

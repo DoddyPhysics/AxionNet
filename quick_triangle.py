@@ -2,7 +2,7 @@ import corner as triangle
 import numpy as np
 from matplotlib import rcParams
 
-run_name='model1_nax20_DE_run1'
+run_name='model1_nax20_DE'
 chain=np.load('Chains/'+run_name+'.npy')
 nwalkers, nsteps,ndim = np.shape(chain)
 burnin = nsteps/4
