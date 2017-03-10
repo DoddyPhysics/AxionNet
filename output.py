@@ -88,8 +88,8 @@ def pressure(y,ma_array,N,n,rhom,rhol,rhor):
 	P=np.sum(Parray,axis=1) # sum up for all axions
 
 	phom = np.array(rhom)*0.
-	phol = np.array(rhol)*1./3.
-	phor = np.array(rhor)*-1.
+	phor = np.array(rhor)*1./3.
+	phol = np.array(rhol)*-1.
 	
 	Psum = phol+phor+phom+P
 
