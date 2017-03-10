@@ -5,3 +5,4 @@
 .DS_Store
 *.pyc
 *.out
+test_sampler_working.py

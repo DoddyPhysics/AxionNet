@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 model=1
 nax=20
-fval=3.0 
+fval=1.e-2 
 beta=0.5
-b0=1.e-1
+b0=1.e8
 
 #myModel = model_class.ModelClass(ifsampling=True,mnum=model,hypervec=(nax,beta,b0,fval))
 #myModel = model_class.ModelClass(fname='configuration_card.ini')
@@ -35,8 +35,8 @@ b0=1.e-1
 # omh2=0.32*0.68**2.=0.148, olh2=0.68*0.68**2.=0.314
 
 for i in range(0,10):
-
-	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DE.ini',mnum=model,hypervec=(nax,beta,b0,fval))
+	print 'computing sample=',i,'...'
+	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DM.ini',mnum=model,hypervec=(nax,beta,b0,fval))
 	my_calculator.solver()
 	Hout,Omout,add0,zeq=my_calculator.quasiObs()
 	#my_calculator.phiplot()
