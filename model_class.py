@@ -21,7 +21,7 @@ class ModelClass(object):
 			elif self.modnum == 2:
 				self.parnum = 5
 			elif self.modnum == 3:
-				self.parnum = 5
+				self.parnum = 9
 			elif self.modnum >= 4 or self.modnum <= 0:
 				raise Exception('Model number must be 1,2,3')
 			
@@ -97,7 +97,7 @@ class ModelClass(object):
 			kD = reduce(np.dot, [p, k2, pT]) #diagonalisation of Kahler metric
 			kD[kD < 1*10**-13] = 0 # removal of computational error terms in off diagonal elements
 			kDr = np.zeros((n, n))#creation of empty 3x3 matrix
-			np.fill_diagonal(kDr, (1/((2**0.5)*np.sqrt(ev))))# matrix for absolving eigen values of kahler metric into axion fields
+			np.fill_diagonal(kDr, (1./(np.sqrt(ev))))# matrix for absolving eigen values of kahler metric into axion fields
 			#kDr[kDr > 1*10**23] = 0 # remove computational errors in reciprocal matrix
 			kDrT = kDr.transpose() # trasnpose of kDr matrix
 
@@ -167,42 +167,74 @@ class ModelClass(object):
 		###################################################################
 
 		if mo == 3:
-			# hyper is s1,s2,b0,sb
-			s1=self.hyper[1]
-			s2=self.hyper[2]
-			b0=self.hyper[3]
-			sb=self.hyper[4]
+			F=self.hyper[1]
+			Lambda = self.hyper[2]
+			smin=self.hyper[3]
+			smax=self.hyper[4]
+			Imax = self.hyper[5]
+			Nvolmax = self.hyper[6]
+			flag = self.hyper[7]
+			a0=self.hyper[8]
+
 			# I am setting a0 to 1 here: I think there are implicit units!
-			a0=1.
+			#a0=1.
 
 			######################################
 			####          Kahler              ####
 			######################################
 
-			k = (a0/np.random.uniform(s1,s2,(n,n))) #random matrix k from log normal distribution
-			kT = k.transpose() # transpose of random matrix k
-			k2 = np.dot(k,kT)  # Construction of symmeterised Kahler matric for real axion fields
-			ev,pT = np.linalg.eigh(k2) # calculation of eigen values and eigen vectors
-			fef = np.sqrt(ev)
+			######################################
+			####          Kahler              ####
+			######################################
+			s = np.random.uniform(smin,smax,n)
+			#s = np.random.randn(smax,n)
+			#k = np.tensordot(1/s,1/s,axes=0) # This is not strictly positive definite!!
+			k = np.zeros((n,n))
+			np.fill_diagonal(k,a0*a0/s/s)
+			ev,pT = np.linalg.eig(k) # calculation of eigen values and eigen vectors
+			flag = poscheck(ev)
+			fef = np.sqrt(2*np.abs(ev))
 			p = pT.transpose() # tranpose of rotational matrix constructed of eigen vectors
-			kD = reduce(np.dot, [p, k2, pT]) #diagonalisation of Kahler metric
-			kD[kD < 1*10**-13] = 0 # removal of computational error terms in off diagonal elements
-			kDr = np.zeros((n, n))#creation of empty 3x3 matrix
-			np.fill_diagonal(kDr, (1/((2**0.5)*np.sqrt(ev))))# matrix for absolving eigen values of kahler metric into axion fields
-			#kDr[kDr > 1*10**23] = 0 # remove computational errors in reciprocal matrix
-			kDrT = kDr.transpose() # trasnpose of kDr matrix
+			kDr = np.zeros((n, n)) #creation of empty 3x3 matrix
+			np.fill_diagonal(kDr, (1/fef)) # matrix for absolving eigen values of kahler metric into axion fields
 
 			######################################
 			####            Mass              ####
 			######################################
-
-			m = (np.random.uniform(np.log(b0)-sb,np.log(b0)+sb,(n,n))) #random matrix m from log normal distribution
-			mm = np.exp(-m)
-			mT = mm.transpose() # transpose of random matrix m
-			m2 = np.dot(mm,mT) # symmeterised mass matrix from real axion fields
-			mn = reduce(np.dot, [pT,kDrT, m2, kDr,p]) # correct mass matrix caclulation
-			ma_array,mv = np.linalg.eigh(mn) # reout of masses^2 from eigenvalues of mn
-			ma_array = np.sqrt(ma_array)
+			Idist = 1
+			##### 1 = uniform distribution of bij from [0,Imax - 1]
+			##### 2 = Poisson distribution of bij with lambda = Imax
+			##### 3 = 'diagonal' uniform distribution of bij from [0,Imax - 1]
+			if Idist == 1:
+				b = 2*np.pi*np.random.randint(Imax,size=n)
+				Nvol = np.random.randint(0,Nvolmax,size=(n,n))
+			elif Idist == 2:
+				b = 2*np.pi*np.random.poisson(Imax,size=n)
+				Nvol = np.random.randint(0,Nvolmax,size=(n,n))			
+			else:
+				b = 2*np.pi*np.random.poisson(Imax,size=n)
+				Nvol = np.zeros((n, n))
+				#np.fill_diagonal(b, 2*np.pi*np.random.randint(Imax,size=n))
+				np.fill_diagonal(Nvol, 2*np.pi*np.random.randint(0,Nvolmax,size=n))
+			##########################
+			Sint = np.multiply(b,np.dot(Nvol,s))
+			Esint = np.exp(-Sint/2)
+			Idar = n*[1]
+			#Cb = np.dot(np.multiply(b,Nvol),Idar)
+			Cb = np.multiply(np.dot(Nvol,Idar),b)
+			#A = np.sqrt(F*Lambda*Lambda*Lambda)*reduce(np.multiply,[np.sqrt(Cb),Esint,b,Nvol])
+			A = np.sqrt(F*Lambda*Lambda*Lambda)*reduce(np.multiply,[np.sqrt(Cb),Esint,b,np.transpose(Nvol)])
+			AT = np.transpose(A)
+			m = np.dot(A,AT)
+			mn = reduce(np.dot, [pT,kDr, m, kDr,p]) # correct mass matrix calculation
+			ma_array2,mv = np.linalg.eig(mn)
+			#print ma_array2
+			flag = poscheck(ma_array2)
+			ma_array = np.sqrt(np.abs(ma_array2))
+			#ma_array = ma_array2 
+			#### The chance of having negative eigenvalues might crash the code, 
+			###  We do sqrt thing outside
+			###  So that we can check and discard any bad samples....
 			
 		phi_range = config.getfloat('Initial Conditions','phi_in_range')
 		phidotin = config.getfloat('Initial Conditions','phidot_in')

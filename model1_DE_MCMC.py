@@ -14,13 +14,16 @@ from quasi_observable_data import *
 # This is not idiot proof!
 
 # Model selection
-run_name='model1_nax20_DE_run2'
+run_name='model1_nax20_DE_run1'
 nax=20
 model=1
 
 # Sampler parameters
 # ndim must be correct for the model!
-ndim, nwalkers, nsteps = 3, 10, 50000
+# nsteps is the number of steps before each save
+ndim, nwalkers, nsteps = 3, 10, 10
+# repeat numiter times
+numiter=100 # iterate the sampler
 
 # Priors
 fmin,fmax=0.,5.e0
@@ -28,7 +31,7 @@ betamin,betamax=0.,1.
 b0min,b0max=0.,1.e1
 
 # Starting position
-startFile=True
+startFile=False
 if startFile:
 	startChain=np.load('Chains/model1_nax20_DE_run1.npy')
 	# Take last sample from each walker as new starting position
@@ -115,20 +118,23 @@ def lnprob(theta, H0,sigH, Om,sigOm):
 # 	      Do the MCMC				   #
 ########################################
 
+
+print 'running, iteration =  ',0.,'  of  ',numiter
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH, Om,sigOm))
-
-# Run the production chain.
-print("Running MCMC...")
 sampler.run_mcmc(pos, nsteps, rstate0=np.random.get_state())
-print("Done.")
+chain=sampler.chain[:,:,:]
+np.save('Chains/'+run_name+'.npy',chain)
 
-#####################################
-# Saving chains
-#####################################
+for i in range(1,numiter):
+	print 'running, iteration =  ',i,'  of  ',numiter
+	pos=chain[:,-1,:]
+	sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH, Om,sigOm))
+	sampler.run_mcmc(pos, nsteps, rstate0=np.random.get_state())
+	temp=sampler.chain[:,:,:]
+	chain=np.concatenate((chain,temp),axis=1)
+	np.save('Chains/'+run_name+'.npy',chain)
+	
 
-# I am saving the chains at the end, not saving the state during a run.
-# Could set up a loop and save every fixed number of steps
 
-print("Saving Chains...")
-np.save('Chains/'+run_name+'.npy',sampler.chain[:,:,:])
+
 
