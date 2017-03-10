@@ -21,7 +21,7 @@ model=1
 # Sampler parameters
 # ndim must be correct for the model!
 # nsteps is the number of steps before each save
-ndim, nwalkers, nsteps = 3, 10, 10
+ndim, nwalkers, nsteps = 3, 10, 500
 # repeat numiter times
 numiter=100 # iterate the sampler
 

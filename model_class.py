@@ -97,11 +97,8 @@ class ModelClass(object):
 			kD = reduce(np.dot, [p, k2, pT]) #diagonalisation of Kahler metric
 			kD[kD < 1*10**-13] = 0 # removal of computational error terms in off diagonal elements
 			kDr = np.zeros((n, n))#creation of empty 3x3 matrix
-<<<<<<< HEAD
 			np.fill_diagonal(kDr, (1./(np.sqrt(ev))))# matrix for absolving eigen values of kahler metric into axion fields
-=======
 			np.fill_diagonal(kDr, (1./np.sqrt(ev)))# matrix for absolving eigen values of kahler metric into axion fields
->>>>>>> c508a06d02f1c30a3914850bc2cb76ec73d7af5e
 			#kDr[kDr > 1*10**23] = 0 # remove computational errors in reciprocal matrix
 			kDrT = kDr.transpose() # trasnpose of kDr matrix
 
@@ -182,10 +179,6 @@ class ModelClass(object):
 
 			# I am setting a0 to 1 here: I think there are implicit units!
 			#a0=1.
-
-			######################################
-			####          Kahler              ####
-			######################################
 
 			######################################
 			####          Kahler              ####
