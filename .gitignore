@@ -4,3 +4,4 @@
 *.dat
 .DS_Store
 *.pyc
+*.out

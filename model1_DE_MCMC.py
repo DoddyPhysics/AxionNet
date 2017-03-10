@@ -20,7 +20,7 @@ model=1
 
 # Sampler parameters
 # ndim must be correct for the model!
-ndim, nwalkers, nsteps = 3, 10, 5000
+ndim, nwalkers, nsteps = 3, 10, 50000
 
 # Priors
 fmin,fmax=0.,5.e0
