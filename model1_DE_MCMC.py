@@ -14,7 +14,7 @@ from quasi_observable_data import *
 # This is not idiot proof!
 
 # Model selection
-run_name='model1_nax20_DE_run1'
+run_name='model1_nax20_DE_run2'
 nax=20
 model=1
 
@@ -31,7 +31,7 @@ betamin,betamax=0.,1.
 b0min,b0max=0.,1.e1
 
 # Starting position
-startFile=False
+startFile=True
 if startFile:
 	startChain=np.load('Chains/model1_nax20_DE_run1.npy')
 	# Take last sample from each walker as new starting position
