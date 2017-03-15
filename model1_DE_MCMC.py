@@ -60,7 +60,6 @@ def lnprior(theta):
 def lnlike(theta, H0,sigH, Om,sigOm):
 		
 	fval,beta,b0 = theta
-
 	# Initialise the naxion model
 	# Hypervec must be correct for the model number, and match the params in theta
 	# There is probably an idiot proof way to do this, but for now you have to think!
@@ -84,7 +83,6 @@ def lnlike(theta, H0,sigH, Om,sigOm):
 	my_calculator.solver()
 	# Output quasi-observables
 	Hout,Omout,add0,zout=my_calculator.quasiObs()
-		
 	# Define Gaussian likelihood on derived quasi observables
 	lnlikH = -0.5*((Hout-H0)**2./(sigH**2.) +np.log(2.*math.pi*sigH**2.) )
 	lnlikOm = -0.5*((Omout-Om)**2./(sigOm**2.) +np.log(2.*math.pi*sigOm**2.) )
