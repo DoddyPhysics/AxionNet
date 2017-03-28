@@ -76,6 +76,28 @@ class hubble_calculator(object):
 		plt.xscale('log')
 		plt.show()
 		
+	def rhoplot(self):
+		"""
+		Call this to plot rhos in test_sampler
+		"""
+		import matplotlib.pyplot as plt
+		self.rhoDMa,self.rhoDEa=output.darkflow(self.y,self.N,self.n)
+		self.rhom, self.rhor = output.dense(self.rho_m0,self.rho_r0,self.N,self.y)
+		self.rholl = output.clambda(self.rhol,self.N)
+		self.z = output.redshift(self.y, self.N)
+		inds=np.where(self.z<0)[0]
+		last=inds[0]
+		self.a=output.scalefactor(self.y,self.N)		
+		avec=self.a[:last]
+		plt.plot(avec,self.rhoDMa[:last],'-k',linewidth=2.)
+		plt.plot(avec,self.rhoDEa[:last],'--k',linewidth=2.)		
+		plt.plot(avec,self.rhor[:last],'-r',linewidth=2.)
+		plt.plot(avec,self.rhom[:last],'-b',linewidth=2.)
+		plt.plot(avec,self.rholl[:last],'-g',linewidth=2.)
+		plt.xscale('log')
+		plt.yscale('log')
+		plt.show()
+		
 	def quasiObs(self):
 		""" A very simple output of quasi-observables for MCMC """
 		# First find z=0, should probably raise an exception in case this is not found

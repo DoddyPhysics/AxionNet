@@ -3,13 +3,15 @@ import numpy as np
 import model_class
 import matplotlib.pyplot as plt
 
+import time
 #np.random.seed(121)
 
 model=1
 nax=20
-fval=1.e-2 
-beta=0.5
-b0=1.e8
+fval=10**(-1.47) 
+beta=0.78
+b0=10**(7.4)
+numsamps=10
 
 #myModel = model_class.ModelClass(ifsampling=True,mnum=model,hypervec=(nax,beta,b0,fval))
 #myModel = model_class.ModelClass(fname='configuration_card.ini')
@@ -34,13 +36,17 @@ b0=1.e8
 # we get cosmology close to LCDM with h~0.68 and the given matter content
 # omh2=0.32*0.68**2.=0.148, olh2=0.68*0.68**2.=0.314
 
-for i in range(0,10):
+for i in range(numsamps):
+	start=time.time()
 	print 'computing sample=',i,'...'
 	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DM.ini',mnum=model,hypervec=(nax,beta,b0,fval))
 	my_calculator.solver()
 	Hout,Omout,add0,zeq=my_calculator.quasiObs()
 	#my_calculator.phiplot()
+	my_calculator.rhoplot()	
 	print 'sample=',i,'outputs=',Hout,Omout,add0,zeq
+	end=time.time()
+	print 'time =   ',end-start
 	#z,H,rhosum=my_calculator.output()
 	#plt.plot(z,H)
 	#dat=np.vstack((z,rhosum))

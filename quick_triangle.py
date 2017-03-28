@@ -10,9 +10,9 @@ burnin = nsteps/4
 combinedUSE=chain[:,burnin:,:].reshape((-1,ndim))
 
 # Priors, for plotting limits and binning
-fmin,fmax=0.,5.e0
+fmin,fmax=-2,-1
 betamin,betamax=0.,1.
-b0min,b0max=0.,1.e1
+b0min,b0max=5.,8.
 
 #################################
 # Plotting fonts
@@ -52,7 +52,7 @@ betabins=np.linspace(betamin,betamax,num=bins)
 combinedCOL='green'
 
 
-fig2 = triangle.corner(combinedUSE, labels=[r'$f/M_{pl}$', r'$\beta$',r'$\sqrt{\langle m^2}\rangle/M_H$'],
+fig2 = triangle.corner(combinedUSE, labels=[r'$\log_{10}(f/M_{pl})$', r'$\beta$',r'$\log_{10}(\sqrt{\langle m^2}\rangle/M_H)$'],
 	color=combinedCOL,smooth1d=2,smooth=2,plot_datapoints=False,
 	levels=(1-np.exp(-0.5),1-np.exp(-2.)),
 	density=True,range=[[fmin,fmax],[betamin,betamax],[b0min,b0max]],bins=[fbins,betabins,b0bins])
