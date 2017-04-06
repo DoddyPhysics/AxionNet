@@ -27,7 +27,7 @@ class ModelClass(object):
 			elif self.modnum == 2:
 				self.parnum = 5
 			elif self.modnum == 3:
-				self.parnum = 8
+				self.parnum = 6
 			elif self.modnum == 4:
 				self.parnum = 4
 			elif self.modnum == 5:
@@ -62,9 +62,9 @@ class ModelClass(object):
 				smin = config.getfloat('Hyperparameter','smin')
 				smax = config.getfloat('Hyperparameter','smax')
 				Ntildemax = config.getfloat('Hyperparameter','Ntildemax')
-				flag = config.getint('Hyperparameter','Flag')
-				a0 = config.getfloat('Hyperparameter','a0')
-				self.hyper=np.vstack((nax,F,Lambda,smin,smax,Ntildemax,flag,a0))
+				#flag = config.getint('Hyperparameter','Flag')
+				#a0 = config.getfloat('Hyperparameter','a0')
+				self.hyper=np.vstack((nax,F,Lambda,smin,smax,Ntildemax))
 			elif self.modnum == 4:
 				c = config.getfloat('Hyperparameter','Dimension')
 				a0 = config.getfloat('Hyperparameter','a0')
@@ -78,9 +78,11 @@ class ModelClass(object):
 				self.hyper=np.vstack((nax,kmin,kmax,mmin,mmax))	
 
 	def poscheck(ev):
-		####### This is to flag negative eigenvalues and exit
+		"""
+		This is to flag negative eigenvalues and exit, we don't use it anywhere but you can.
+		"""
 		if any(x <= 0 for x in ev):
-			return 1
+			raise Exception('You have negative eigenvalues')
 		else:
 			return 0
 
@@ -218,11 +220,11 @@ class ModelClass(object):
 			smin=self.hyper[3]
 			smax=self.hyper[4]
 			Ntildemax=self.hyper[5]
-			flag = self.hyper[6]
-			a0=self.hyper[7]
+			#flag = self.hyper[6]
+			#a0=self.hyper[7]
 
 			# I am setting a0 to 1 here: I think there are implicit units!
-			#a0=1.
+			a0=1.
 
 		######################################
 		####          Kahler              ####
@@ -234,7 +236,7 @@ class ModelClass(object):
 			k = np.zeros((n,n))
 			np.fill_diagonal(k,a0*a0/s/s)
 			ev,pT = np.linalg.eig(k) # calculation of eigen values and eigen vectors
-			fef = np.sqrt(np.abs(ev))
+			fef = np.sqrt(np.abs(2.*ev))
 			p = pT.transpose() # tranpose of rotational matrix constructed of eigen vectors
 			kDr = np.zeros((n, n))#creation of empty 3x3 matrix
 			np.fill_diagonal(kDr, (1/fef))# matrix for absolving eigen values of kahler metric into axion fields
@@ -243,19 +245,18 @@ class ModelClass(object):
 			####            Mass              ####
 			######################################
 			
-			if Idist == 1:
+			#if Idist == 1:
 				#b = [2*np.pi*np.random.randint(Imax,size=n)]
-				b = [1]*n
-				Ntilde = np.random.poisson(Ntildemax,size=(n,n))
-			elif Idist == 2:
+			#	b = [1]*n
+			#	Ntilde = np.random.poisson(Ntildemax,size=(n,n))
+			#elif Idist == 2:
 				#b = 2*np.pi*np.random.poisson(Imax,size=n)
-				b = [1]*n
-				Ntilde = np.random.uniform(0,Ntildemax,size=(n,n))			
-			else:
-				b = [1]*n
-				Ntilde = np.zeros((n, n))
-				#np.fill_diagonal(b, 2*np.pi*np.random.randint(Imax,size=n))
-				np.fill_diagonal(Ntilde, 2*np.pi*np.random.randint(Ntildemax,size=n))
+			#	b = [1]*n
+			#	Ntilde = np.random.uniform(0,Ntildemax,size=(n,n))			
+			#else:
+			b = [1]*n # instanton charges
+			Ntilde = np.zeros((n, n)) 
+			np.fill_diagonal(Ntilde, 2*np.pi*np.random.randint(Ntildemax,size=n)) # Assume diagonal N in gauge kinetic
 				
 			##########################
 			
@@ -268,7 +269,7 @@ class ModelClass(object):
 			m = np.dot(A,AT)
 			mn = reduce(np.dot, [pT,kDr, m, kDr,p]) # correct mass matrix calculation
 			ma_array2,mv = np.linalg.eig(mn)
-			flag = poscheck(ma_array2)
+			#flag = poscheck(ma_array2)
 			ma_array = np.sqrt(np.abs(ma_array2))
 			#### The chance of having negative eigenvalues might crash the code, 
 			###  We do sqrt thing outside
@@ -296,7 +297,7 @@ class ModelClass(object):
 			K  = a0*(np.random.randn(n, L))
 			Kc = np.dot(K,(K.T))/L
 			ev,pT = np.linalg.eig(Kc) 
-			fef = np.sqrt(np.abs(2*ev))	 
+			fef = np.sqrt(np.abs(2.*ev))	 
 			p = pT.transpose() 
 			kD = reduce(np.dot, [p, Kc, pT]) 
 			kD[kD < 1*10**-13] = 0 
