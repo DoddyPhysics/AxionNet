@@ -6,7 +6,7 @@ import ConfigParser
 import eoms as eoms
 import output as output
 
-import model_class_v2 as model_class
+import model_class_v3 as model_class
 
 
 class hubble_calculator(object):
