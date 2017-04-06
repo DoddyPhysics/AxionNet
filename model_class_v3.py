@@ -254,21 +254,23 @@ class ModelClass(object):
 			#	b = [1]*n
 			#	Ntilde = np.random.uniform(0,Ntildemax,size=(n,n))			
 			#else:
-			b = [1]*n # instanton charges
+			b = [1.]*n # instanton charges
 			Ntilde = np.zeros((n, n)) 
-			np.fill_diagonal(Ntilde, 2*np.pi*np.random.randint(Ntildemax,size=n)) # Assume diagonal N in gauge kinetic
-				
+			np.fill_diagonal(Ntilde, 2*np.pi*np.random.uniform(Ntildemax,size=n)) # Assume diagonal N in gauge kinetic
+		
 			##########################
 			
 			Sint = np.multiply(b,np.dot(Ntilde,s))
-			Esint = np.exp(-Sint/2)
-			Idar = n*[1]
+			Esint = np.exp(-Sint/2.)
+			Idar = n*[1.]
 			Cb = np.multiply(np.dot(Ntilde,Idar),b)
 			A = np.sqrt(F*Lambda*Lambda*Lambda)*reduce(np.multiply,[np.sqrt(Cb),Esint,b,np.transpose(Ntilde)])
+			#print 'IN MODEL CLASS', Sint,Esint,Idar,Cb
 			AT = np.transpose(A)
 			m = np.dot(A,AT)
 			mn = reduce(np.dot, [pT,kDr, m, kDr,p]) # correct mass matrix calculation
 			ma_array2,mv = np.linalg.eig(mn)
+			#print 'IN MODEL CLASS', ma_array2
 			#flag = poscheck(ma_array2)
 			ma_array = np.sqrt(np.abs(ma_array2))
 			#### The chance of having negative eigenvalues might crash the code, 
