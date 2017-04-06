@@ -4,6 +4,12 @@ import numpy.random as rd
 
 config = ConfigParser.RawConfigParser()
 
+# Note that np.linalg.eig(M) returns the normalized eigenvectors as an array with eigenvectors as columns.
+# The column v[:, i] is the normalized eigenvector corresponding to the eigenvalue w[i]. 
+# i.e. it returns the (right acting) rotation matrix.
+# If eigval,eigvec=np.linalg.eig(M), then np.dot(eigvec.T,np.dot(M,eigvec)) is the diagonal matrix with eigval entries
+# and rotating vectors goes as np.dot(eigv,x) = R.x = R_{ij} x_j
+
 class ModelClass(object):
 	
 	def __init__(self,fname='configuration_card.ini',ifsampling=False,mnum=None,hypervec=None):
