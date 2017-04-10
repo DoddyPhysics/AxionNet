@@ -68,11 +68,11 @@ def lnprior(theta):
 		
 	# Flat priors on parameters
 	if lFmin<lF<lFmax and lLmin<lL<lLmax and sminl<smin<sminu and smaxl<smax<smaxu and Nmin<N<Nmax:
-		if debugging:
-			print 'lnprior = ', 0.0
+		#if debugging:
+		#	print 'lnprior = ', 0.0
 		return 0.0
-	if debugging:
-		print 'lnprior = ', 'inf'
+	#if debugging:
+	#	print 'lnprior = ', 'inf'
 	return -np.inf
 
 ##########################################
@@ -104,8 +104,8 @@ def lnlike(theta, H0,sigH, Om,sigOm):
 
 	for i in range(nax):
 		if masses[i]>mcut:
-			if debugging:
-				print 'MASSES OUTSIDE PRIOR'
+			#if debugging:
+			#	print 'MASSES OUTSIDE PRIOR'
 			return -np.inf
 
 	#############################################################################	
@@ -131,7 +131,7 @@ def lnlike(theta, H0,sigH, Om,sigOm):
 	if debugging:
 		print 'in likelihood, obs=   ',	Hout,Omout,add0,zout
 		end = time.time()
-		print 'elapsed time in  lik =   ',end-start	
+		#print 'elapsed time in  lik =   ',end-start	
 		print 'lnlik = ', lnlikH+lnlikOm+lnlikacc+lnlikZ
 	
 	return lnlikH+lnlikOm+lnlikacc+lnlikZ
@@ -154,31 +154,31 @@ def lnprob(theta, H0,sigH, Om,sigOm):
 ########################################
 
 
-print 'running, iteration =  ',0.,'  of  ',numiter
+#print 'running, iteration =  ',0.,'  of  ',numiter
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH, Om,sigOm))
-if debugging:
-	print 'running MCMC'
+#if debugging:
+#	print 'running MCMC'
 sampler.run_mcmc(pos, nsteps, rstate0=np.random.get_state())
-if debugging:
-	print 'making chain'
+#if debugging:
+#	print 'making chain'
 chain=sampler.chain[:,:,:]
-if debugging:
-	print 'saving'
+#if debugging:
+#	print 'saving'
 np.save('Chains/'+run_name+'.npy',chain)
 
 for i in range(1,numiter):
-	print 'running, iteration =  ',i,'  of  ',numiter
+	#print 'running, iteration =  ',i,'  of  ',numiter
 	pos=chain[:,-1,:]
 	sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH, Om,sigOm))
-	if debugging:
-		print 'running MCMC'
+	#if debugging:
+	#	print 'running MCMC'
 	sampler.run_mcmc(pos, nsteps, rstate0=np.random.get_state())
-	if debugging:
-		print 'making chain'
+	#if debugging:
+	#	print 'making chain'
 	temp=sampler.chain[:,:,:]
 	chain=np.concatenate((chain,temp),axis=1)
-	if debugging:
-		print 'saving'
+	#if debugging:
+	#	print 'saving'
 	np.save('Chains/'+run_name+'.npy',chain)
 	
 
