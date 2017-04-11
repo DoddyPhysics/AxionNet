@@ -1,3 +1,11 @@
+"""
+This is the workhorse of the code. Take a model and solve its equations of motion.
+Compute outputs and quasiobservables.
+There are some plotting scripts too.
+
+DJEM+MS+CP+LP, 2017
+"""
+
 import scipy.integrate as integrate
 import numpy as np
 import numpy.random as rd
