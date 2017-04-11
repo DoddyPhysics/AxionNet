@@ -22,7 +22,7 @@ if debugging:
 # This is not idiot proof!
 
 # Model selection
-run_name='Mtheory_nax20_DM_run1'
+run_name='Mtheory_wide_nax20_DM_run1'
 nax=20
 model=3
 
@@ -42,7 +42,7 @@ smaxl,smaxu=20.,110.
 Nmin,Nmax=0.5,2.
 
 # Starting position
-startFile=False
+startFile=True
 startChainFile='Chains/Mtheory_nax20_DM_run1.npy'
 
 ##################################
