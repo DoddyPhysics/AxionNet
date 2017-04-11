@@ -42,7 +42,7 @@ smaxl,smaxu=20.,150.
 Nmin,Nmax=0.5,10.
 
 # Starting position
-startFile=True
+startFile=False
 startChainFile='Chains/Mtheory_nax20_DM_run1.npy'
 
 ##################################
@@ -104,8 +104,9 @@ def lnlike(theta, H0,sigH, Om,sigOm):
 
 	for i in range(nax):
 		if masses[i]>mcut:
-			#if debugging:
+			if debugging:
 			#	print 'MASSES OUTSIDE PRIOR'
+				print 'lnlik = ', -np.inf
 			return -np.inf
 
 	#############################################################################	
