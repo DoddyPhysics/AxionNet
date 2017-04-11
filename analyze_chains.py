@@ -1,7 +1,13 @@
+"""
+Compute statistics from your chain.
+
+DJEM, 2017
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-run_name='model1_nax20_DM'
+run_name='Mtheory_wide_nax20_DM_run1'
 
 ############################
 # Settings
@@ -10,7 +16,7 @@ run_name='model1_nax20_DM'
 modes=True # modes were slow with scipy modes, fast with histogram
 thin=False # thin the chain
 run=True # compute the stats
-hist=False # Look at histograms if you want a sanity check
+hist=True # Look at histograms if you want a sanity check
 
 #############################
 # Initialising
