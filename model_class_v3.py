@@ -1,3 +1,10 @@
+"""
+This is the theory part of the code. 
+Compute the mass and initial conditions spectrum.
+
+DJEM+MS+CP, 2017
+"""
+
 import numpy as np
 import ConfigParser
 import numpy.random as rd
