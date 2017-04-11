@@ -1,16 +1,31 @@
+"""
+Do some test sampling from a model.
+This is a bit messy, as I just hack it every time.
+You might find some useful stuff here though.
+
+DJEM, 2017
+"""
+
 import naxion
 import numpy as np
 import model_class
 import matplotlib.pyplot as plt
+from quasi_observable_data import *
+
 
 import time
 #np.random.seed(121)
 
-model=1
+model=3
 nax=20
-fval=10**(-1.47) 
-beta=0.78
-b0=10**(7.4)
+#fval=10**(-1.47) 
+#beta=0.78
+#b0=10**(7.4)
+lF=106.
+lL=-5.3
+smin=17.
+smax=93.2
+N=1.61
 numsamps=10
 
 #myModel = model_class.ModelClass(ifsampling=True,mnum=model,hypervec=(nax,beta,b0,fval))
@@ -37,16 +52,33 @@ numsamps=10
 # omh2=0.32*0.68**2.=0.148, olh2=0.68*0.68**2.=0.314
 
 for i in range(numsamps):
-	start=time.time()
-	print 'computing sample=',i,'...'
-	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DM.ini',mnum=model,hypervec=(nax,beta,b0,fval))
-	my_calculator.solver()
-	Hout,Omout,add0,zeq=my_calculator.quasiObs()
+	#start=time.time()
+	#print 'computing sample=',i,'...'
+	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DM.ini',mnum=model,
+		hypervec=(nax,10**lF,10**lL,smin,smax,N))
+	masses=my_calculator.ma_array*MH
+	masses=np.log10(masses)
+	print 'sample= ',i,'masses=  ',masses
+	#if debugging:
+	#	print 'phivals/Mpl   ',my_calculator.phiin_array
+	#	print 'log10(masses/mmax)  ',masses-mcut
+	if np.logical_not(masses[masses-mcut>0].size):
+	#for i in range(nax):
+	#	if masses[i]>mcut:
+	#		print 'MASSES OUTSIDE PRIOR'
+			
+		my_calculator.solver()
+		Hout,Omout,add0,zeq=my_calculator.quasiObs()
 	#my_calculator.phiplot()
-	my_calculator.rhoplot()	
-	print 'sample=',i,'outputs=',Hout,Omout,add0,zeq
-	end=time.time()
-	print 'time =   ',end-start
+		my_calculator.rhoplot()	
+		print 'outputs=',Hout,Omout,add0,zeq
+	else:
+		print 'masses failed cut'
+	
+	
+	
+	#end=time.time()
+	#print 'time =   ',end-start
 	#z,H,rhosum=my_calculator.output()
 	#plt.plot(z,H)
 	#dat=np.vstack((z,rhosum))
