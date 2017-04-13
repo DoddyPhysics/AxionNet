@@ -14,7 +14,7 @@ from quasi_observable_data import *
 
 
 import time
-np.random.seed(121)
+#np.random.seed(121)
 
 numsamps=10
 
@@ -24,7 +24,7 @@ nax=20
 #fval=10**(-1.47) 
 #beta=0.78
 #b0=10**(7.4)
-lFL3=105.
+lFL3=108.
 #lL=0.
 smin=25.
 smax=50.
@@ -71,7 +71,7 @@ for i in range(numsamps):
 
 # Mtheory-DM
 	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DM.ini',mnum=model,
-		hypervec=(nax,10**lFL3,smin,smax,N,betaM),init_Kdiag=True,remove_masses=False)
+		hypervec=(nax,10**lFL3,smin,smax,N,betaM),init_Kdiag=True,remove_masses=True)
 
 # MP
 #	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DM.ini',mnum=1,
@@ -79,7 +79,7 @@ for i in range(numsamps):
 
 	masses=my_calculator.ma_array*MH
 	masses=np.log10(masses)
-	print 'masses=  ',masses
+	#print 'masses=  ',masses
 	#if debugging:
 	#	print 'phivals/Mpl   ',my_calculator.phiin_array
 	#	print 'log10(masses/mmax)  ',masses-mcut
@@ -91,7 +91,7 @@ for i in range(numsamps):
 		my_calculator.solver()
 		Hout,Omout,add0,zeq=my_calculator.quasiObs()
 	#my_calculator.phiplot()
-		my_calculator.rhoplot()	
+		#my_calculator.rhoplot()	
 		print 'outputs=',Hout,Omout,add0,zeq
 	else:
 		print 'masses failed cut'

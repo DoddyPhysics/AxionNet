@@ -306,23 +306,26 @@ class ModelClass(object):
 			Sint = np.dot(s,Ntilde)
 			Esint = np.exp(-Sint/2.)
 			Idar = n*[1.]
-			Cb = np.dot(Idar,Ntilde)
+			Cb = np.sqrt(np.dot(Idar,Ntilde))
 					
 			#A = 2.*np.sqrt(F*Lambda*Lambda*Lambda)*reduce(np.multiply,[Cb,Esint,Ntilde]) 
 			A = 2.*np.sqrt(FL3)*reduce(np.multiply,[Cb,Esint,Ntilde]) 
-			
+
 			m = np.dot(A,A.T)/L # factor of L as for Marchenko-Pastur. Correct?
 			mn = 2.*reduce(np.dot, [kDr,p,m,p.T,kDr.T]) 
 			ma_array,mv = np.linalg.eigh(mn) 
-			#print 'eigs = (m/M_H)^2', ma_array
 			
 			######################################
 			# Note on eigenvalues
 			######################################
 			# We use eigh here: numerical error is making mn non-symmetric, even though it is mathematically symmetric
 			# eigh assumes Hermitian and returns real eigenvectors. 
-			# Still have a problem of tachyons from numerical error.
-			# Using "remove tachyons" removes them from spectrum, otherwise, we use abs and assume they are positive.
+			# Still have a problem of tachyons from numerical error. This is only for the lightest masses.
+			# Using "remove tachyons" removes them from spectrum, otherwise we use abs and assume they are positive.
+			# This is caused by the large spread in eigenvalues in the Mtheory model.
+			# See note in stack overflow: http://stackoverflow.com/questions/36819739/scipy-eigh-gives-negative-eigenvalues-for-positive-semidefinite-matrix
+			# Try this to do better, btu we may be screwed:
+			# http://stackoverflow.com/questions/6876377/numpy-arbitrary-precision-linear-algebra
 			#####################################
 			
 			# remove any tachyons by setting to zero "as if decayed"
@@ -428,7 +431,7 @@ class ModelClass(object):
 		if self.remove:
 			# Set masses that fail the cut to be zero.
 			# This is "as if those axions decayed", because our i.c.'s remove them from the spectrum.
-			ma_array[np.log10(ma_array)-quasi.mcut>0.]=0.
+			ma_array[np.log10(ma_array*quasi.MH)-quasi.mcut>0.]=0.
 			
 		
 		return n,ma_array,phiin_array,phidotin_array

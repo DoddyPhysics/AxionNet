@@ -22,7 +22,7 @@ if debugging:
 # This is not idiot proof!
 
 # Model selection
-run_name='Mtheory_wide_nax20_DM_run1'
+run_name='Mtheory_nax20_DM_run1'
 nax=20
 model=3
 
@@ -35,14 +35,15 @@ numiter=25000 # iterate the sampler
 # total steps = nwalkers*nsteps*numiter
 
 # Priors
-lFmin,lFmax=100.,110.
-lLmin,lLmax=-6.,0.
-sminl,sminu=10.,20.
-smaxl,smaxu=20.,110.
-Nmin,Nmax=0.5,2.
+lFL3min,lFL3max=100.,115.
+sminl,sminu=10.,30.
+smaxl,smaxu=30.,100.
+Nmin,Nmax=0.5,1.
+betamin,betamax=0.,1.
+
 
 # Starting position
-startFile=True
+startFile=False
 startChainFile='Chains/Mtheory_nax20_DM_run1.npy'
 
 ##################################
@@ -56,18 +57,18 @@ if startFile:
 else:
 	# Uniform starts
 	# Match these to the prior if using e.g. log-flat
-	pos = [[np.random.uniform(lFmin,lFmax),np.random.uniform(lLmin,lLmax),np.random.uniform(sminl,sminu)
-		,np.random.uniform(smaxl,smaxu),np.random.uniform(Nmin,Nmax)] for i in range(nwalkers)]
+	pos = [[np.random.uniform(lFL3min,lFL3max),np.random.uniform(sminl,sminu)
+		,np.random.uniform(smaxl,smaxu),np.random.uniform(Nmin,Nmax),np.random.uniform(betamin,betamax)] for i in range(nwalkers)]
 
 ##############################
 # Likelihood and prior functions
 ##############################
 
 def lnprior(theta):
-	lF,lL,smin,smax,N = theta
+	lFL3,smin,smax,N,beta = theta
 		
 	# Flat priors on parameters
-	if lFmin<lF<lFmax and lLmin<lL<lLmax and sminl<smin<sminu and smaxl<smax<smaxu and Nmin<N<Nmax:
+	if lFL3min<lFL3<lFL3max and sminl<smin<sminu and smaxl<smax<smaxu and Nmin<N<Nmax and betamin<beta<betamax:
 		if debugging:
 			print 'lnprior = ', 0.0
 		return 0.0
@@ -81,20 +82,24 @@ def lnprior(theta):
 
 def lnlike(theta, H0,sigH, Om,sigOm):
 		
-	lF,lL,smin,smax,N = theta
+	lFL3,smin,smax,N,beta = theta
 	if debugging:
 		start = time.time()
-		print 'in likelihood, params   ',lF,lL,smin,smax,N
+		print 'in likelihood, params   ',lFL3,smin,smax,N,beta
 	# Initialise the naxion model
 	# Hypervec must be correct for the model number, and match the params in theta
 	# There is probably an idiot proof way to do this, but for now you have to think!
+	
 	my_calculator = naxion.hubble_calculator(ifsampling=True,
-		fname='configuration_card_DM.ini',mnum=model,hypervec=(nax,10.**lF,10.**lL,smin,smax,N))
+		fname='configuration_card_DM.ini',mnum=model,init_Kdiag=True,remove_masses=True,
+		hypervec=(nax,10.**lFL3,smin,smax,N,beta))
 
 	###############################################################################	
 	# Apply a "prior" to the log10(masses)
 	# Done inside the likelihood to assure it is same random seed as for solver
 	# If mass cut failed return zero likelihood, lnlik=-np.inf
+	# Using remove_masses=True this should never happen.
+	# Using remove_masses=False you need this for consistency.
 
 	masses=my_calculator.ma_array*MH
 	masses=np.log10(masses)
@@ -103,6 +108,7 @@ def lnlike(theta, H0,sigH, Om,sigOm):
 	#	print 'log10(masses/mmax)  ',masses-mcut
 
 	for i in range(nax):
+
 		if masses[i]>mcut:
 			if debugging:
 				print 'MASSES OUTSIDE PRIOR'
