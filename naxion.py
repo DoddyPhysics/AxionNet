@@ -14,19 +14,20 @@ import ConfigParser
 import eoms as eoms
 import output as output
 
-import model_class_v3 as model_class
+import model_class_v4 as model_class
 
 
 class hubble_calculator(object):
 
-	def __init__(self,fname='configuration_card.ini',ifsampling=False,mnum=None,hypervec=None):
+	def __init__(self,fname='configuration_card.ini',ifsampling=False,mnum=None,hypervec=None,init_Kdiag=True,remove_masses=True):
 
 		""" Initialise the object. Default uses configuration card. 
 		If you use ifsampling, then mnum and hypervec are required, otherwise they are ignored.
 		A thing that needs fixing here: it reads the config card on every step of an MCMC, so if you change it
 		during a run, it affects the run. """
 				
-		myModel = model_class.ModelClass(fname=fname,ifsampling=ifsampling,mnum=mnum,hypervec=hypervec)
+		myModel = model_class.ModelClass(fname=fname,ifsampling=ifsampling,init_Kdiag=init_Kdiag,remove_masses=remove_masses,
+		mnum=mnum,hypervec=hypervec)
 
 		self.n,self.ma_array,self.phiin_array,self.phidotin_array=myModel.getParams()
 		self.rho_m0,self.rhol,self.rho_r0=myModel.cosmo()
@@ -94,7 +95,11 @@ class hubble_calculator(object):
 		self.rholl = output.clambda(self.rhol,self.N)
 		self.z = output.redshift(self.y, self.N)
 		inds=np.where(self.z<0)[0]
-		last=inds[0]
+
+		if np.shape(inds)[0]==0:
+			last=np.size(self.z)
+		else:
+			last=inds[0]
 		self.a=output.scalefactor(self.y,self.N)		
 		avec=self.a[:last]
 		plt.plot(avec,self.rhoDMa[:last],'-k',linewidth=2.)
@@ -104,6 +109,7 @@ class hubble_calculator(object):
 		plt.plot(avec,self.rholl[:last],'-g',linewidth=2.)
 		plt.xscale('log')
 		plt.yscale('log')
+		plt.ylim([1.e-5,1.e28])
 		plt.show()
 		
 	def quasiObs(self):
@@ -111,6 +117,10 @@ class hubble_calculator(object):
 		# First find z=0, should probably raise an exception in case this is not found
 		self.z = output.redshift(self.y, self.N)
 		inds=np.where(self.z<0)[0]
+		if np.shape(inds)[0]==0:
+			# return dummy values if z=0 is not found
+			print 'z=0 was not found, returning dummy values that will fail likelihood'
+			return 100.,100.,-1.,100.
 		# Get all the densities and pressures for acceleration and H
 		self.a=output.scalefactor(self.y,self.N)
 		self.rhoa = output.axionrho(self.y,self.N,self.n)

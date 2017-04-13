@@ -14,19 +14,33 @@ from quasi_observable_data import *
 
 
 import time
-#np.random.seed(121)
+np.random.seed(121)
 
+numsamps=10
+
+# Mtheory
 model=3
 nax=20
 #fval=10**(-1.47) 
 #beta=0.78
 #b0=10**(7.4)
-lF=106.
-lL=-5.3
-smin=17.
-smax=93.2
-N=1.61
-numsamps=10
+lFL3=105.
+#lL=0.
+smin=25.
+smax=50.
+N=0.7
+betaM=1.
+
+
+# MP-DE
+#beta=0.5
+#b0=0.2
+#f=0.3
+
+# MP-DM
+beta=0.5
+b0=10**(7.)
+f=10**(-1.3)
 
 #myModel = model_class.ModelClass(ifsampling=True,mnum=model,hypervec=(nax,beta,b0,fval))
 #myModel = model_class.ModelClass(fname='configuration_card.ini')
@@ -54,11 +68,18 @@ numsamps=10
 for i in range(numsamps):
 	#start=time.time()
 	#print 'computing sample=',i,'...'
+
+# Mtheory-DM
 	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DM.ini',mnum=model,
-		hypervec=(nax,10**lF,10**lL,smin,smax,N))
+		hypervec=(nax,10**lFL3,smin,smax,N,betaM),init_Kdiag=True,remove_masses=False)
+
+# MP
+#	my_calculator = naxion.hubble_calculator(ifsampling=True,fname='configuration_card_DM.ini',mnum=1,
+#		hypervec=(nax,beta,b0,f),init_Kdiag=True,remove_masses=False)
+
 	masses=my_calculator.ma_array*MH
 	masses=np.log10(masses)
-	print 'sample= ',i,'masses=  ',masses
+	print 'masses=  ',masses
 	#if debugging:
 	#	print 'phivals/Mpl   ',my_calculator.phiin_array
 	#	print 'log10(masses/mmax)  ',masses-mcut

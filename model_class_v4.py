@@ -1,6 +1,7 @@
 """
 This is the theory part of the code. 
 Compute the mass and initial conditions spectrum.
+Get all other params.
 
 DJEM+MS+CP, 2017
 """
@@ -8,6 +9,7 @@ DJEM+MS+CP, 2017
 import numpy as np
 import ConfigParser
 import numpy.random as rd
+import quasi_observable_data as quasi # for mcut
 
 config = ConfigParser.RawConfigParser()
 
@@ -19,24 +21,42 @@ config = ConfigParser.RawConfigParser()
 
 class ModelClass(object):
 	
-	def __init__(self,fname='configuration_card.ini',ifsampling=False,mnum=None,hypervec=None):
+	"""
+	Functions are:
+	getParams: returns axion model params (n,m,phii,phidoti)
+	inits: returns integrator conditions (ai,ti,tf)
+	evolution: accuracy parameters (nsteps,ncross)
+	cosmo: cosmo parameters (Omh2,Olh2,Orh2)
+	"""
+	
+	def __init__(self,fname='configuration_card.ini',ifsampling=False,remove_masses=True,init_Kdiag=True,
+		mnum=None,hypervec=None):
 		
-		""" Initialise the object. Default uses configuration card. 
-		If you use ifsampling, then mnum and hypervec are required, otherwise they are ignored. 
-		This reads the theory L1 hyper parameters, and model selection. """
+		""" 
+		Initialise the object. This reads the theory L1 hyper parameters, and model selection. 
+		Default uses configuration card. 
+		ifsampling: use mnum and hypervec as entries, otherwise they are ignored. 
+		remove_masses: how to treat masses outside the allowed range . Default: set to zero as "decayed".
+		init_Kdiag: How to set i.c.'s. Default is square theta lattice in K-diag basis.
+		"""
 		
+		self.init=init_Kdiag
+		self.remove=remove_masses
+		
+		config.read(fname)
 		if ifsampling:
+			# the config card is only used for cosmo params and inits
 			self.modnum = mnum
 			self.hyper = np.vstack(hypervec)
 			
 			if self.modnum == 1:
 				self.parnum = 4
 			elif self.modnum == 2:
-				self.parnum = 5
+				self.parnum = 7
 			elif self.modnum == 3:
 				self.parnum = 6
 			elif self.modnum == 4:
-				self.parnum = 4
+				self.parnum = 5
 			elif self.modnum == 5:
 				self.parnum = 5		
 			elif self.modnum >= 6 or self.modnum <= 0:
@@ -45,24 +65,26 @@ class ModelClass(object):
 			if np.shape(self.hyper)[0]!=self.parnum:
 				raise Exception('You have the wrong number of hyper parameters for your selected model')
 			
-			config.read(fname) # this time the config is only used for cosmo params and inits			
 
 		else:
-			config.read(fname)
+			# Read axion params from config_card, make into hypervec
+			
 			self.modnum = config.getint('Model_Selection','Model' )
 			nax=config.getint('Hyperparameter','Number of Axions')
 
 			if self.modnum == 1:
 				b0 = config.getfloat('Hyperparameter','b0')
-				betaM = config.getfloat('Hyperparameter','betaM')
+				betaM = config.getfloat('Hyperparameter','Dimension')
 				fav = config.getfloat('Hyperparameter','fNflation')
-				self.hyper=np.vstack((nax,c,b0,fav))
+				self.hyper=np.vstack((nax,betaM,b0,fav))
 			elif self.modnum == 2:
+				betaK = config.getfloat('Hyperparameter','betaK')
+				betaM = config.getfloat('Hyperparameter','betaM')				
 				kmin = config.getfloat('Hyperparameter','kmin')
 				kmax = config.getfloat('Hyperparameter','kmax')
 				mmin = config.getfloat('Hyperparameter','mmin')
 				mmax = config.getfloat('Hyperparameter','mmax')
-				self.hyper=np.vstack((nax,kmin,kmax,mmin,mmax))
+				self.hyper=np.vstack((nax,betaK,betaM,kmin,kmax,mmin,mmax))
 			elif self.modnum == 3:
 				F = config.getfloat('Hyperparameter','F')
 				Lambda = config.getfloat('Hyperparameter','Lambda')
@@ -70,20 +92,23 @@ class ModelClass(object):
 				smax = config.getfloat('Hyperparameter','smax')
 				Ntildemax = config.getfloat('Hyperparameter','Ntildemax')
 				betaM = config.getfloat('Hyperparameter','betaM')
-				#flag = config.getint('Hyperparameter','Flag')
-				#a0 = config.getfloat('Hyperparameter','a0')
 				self.hyper=np.vstack((nax,F,Lambda,smin,smax,Ntildemax,betaM))
 			elif self.modnum == 4:
+				betaK = config.getfloat('Hyperparameter','betaK')
 				betaM = config.getfloat('Hyperparameter','betaM')
 				a0 = config.getfloat('Hyperparameter','a0')
 				b0 = config.getfloat('Hyperparameter','b0')
-				self.hyper=np.vstack((nax,c,a0,b0))	
+				self.hyper=np.vstack((nax,betaK,betaM,a0,b0))	
 			elif self.modnum == 5:
 				kmin = config.getfloat('Hyperparameter','kmin')
 				kmax = config.getfloat('Hyperparameter','kmax')
 				mmin = config.getfloat('Hyperparameter','mmin')
 				mmax = config.getfloat('Hyperparameter','mmax')
 				self.hyper=np.vstack((nax,kmin,kmax,mmin,mmax))	
+
+#########################################
+# Chakrit functions
+########################################
 
 	def poscheck(ev):
 		"""
@@ -110,10 +135,15 @@ class ModelClass(object):
 			np.fill_diagonal(Nvol, 2*np.pi*np.random.poisson(Nvolmax,size=n))
 		return np.dot(s,Nvol)
 				
-#######################################################	#######################################################	
+#######################################################
+# The main function gets model parameters
+######################################################
 
 	def getParams(self):
-		"""" Return the number of axions, masses and phivals, this is theory L1 and also reads the phi range """
+		
+		"""" Return the number of axions, masses and phivals, i.e. the model parameters. 
+		This converts theory L1 to model params. Reads theta range. """
+
 		###################################################################
 		###################################################################
 		####                        Models                             ####
@@ -129,43 +159,39 @@ class ModelClass(object):
 
 		
 		if mo == 1:
-			# hyper is (c,sb,fav)
+			
 			betaM=self.hyper[1]
 			b0=self.hyper[2]
 			fav=self.hyper[3]
-			fav=fav[0]
 			
 			###############################################################################################	
 			####          Kahler, trivial for this model, but we go through the motions anyway         ####
 			###############################################################################################	
-		
-		
+				
 			kk = np.empty((n,n))
-			kk.fill(1) 
-			#kk = np.full((n, 1), 1) 
-			kk3=np.diag(kk[:,0])
-			kT = kk3.transpose() # transpose of random matrix k
-			k2 = np.dot(kk3,kT)  # Construction of symmeterised Kahler matric for real axion fields
-			ev,pT = np.linalg.eigh(k2) # calculation of eigen values and eigen vectors
+			kk.fill(1.) 
+			kk2=np.diag(kk[:,0])
+			kkT = kk2.transpose() # transpose of random matrix k
+			k2 = np.dot(kk2,kkT)  # Construction of symmeterised Kahler matric for real axion fields
+			ev,p = np.linalg.eig(k2) # calculation of eigen values and eigen vectors
+			#ev,p = np.linalg.eig(kk) # calculation of eigen values and eigen vectors
 			fef = np.sqrt(ev)*fav # This is an implicit choice for f in this model
-			p = pT.transpose() # tranpose of rotational matrix constructed of eigen vectors
-			kD = reduce(np.dot, [p, k2, pT]) #diagonalisation of Kahler metric
-			kD[kD < 1*10**-13] = 0 # removal of computational error terms in off diagonal elements
-			kDr = np.zeros((n, n))#creation of empty 3x3 matrix
-			np.fill_diagonal(kDr, (1/((1)*np.sqrt(ev))))# matrix for absolving eigen values of kahler metric into axion fields
-			#kDr[kDr > 1*10**23] = 0 # remove computational errors in reciprocal matrix
-			kDrT = kDr.transpose() # trasnpose of kDr matrix
-
+			fmat = np.zeros((n,n))
+			np.fill_diagonal(fmat,fef)
+#			kD = reduce(np.dot, [p.T, k2, p]) #diagonalisation of Kahler metric
+#			kD[kD < 1*10**-13] = 0 # removal of computational error terms in off diagonal elements
+			kDr = np.zeros((n, n))
+			np.fill_diagonal(kDr, (1./(fef))) # matrix for absolving eigen values of kahler metric into axion fields
+			
 			######################################
 			####            Mass              ####
 			######################################
 		
-		
 			L=int(n/betaM)
 			X = b0*(np.random.randn(n, L)) 
-			Wc = np.dot(X,(X.T))/L
-			mn = reduce(np.dot, [pT,kDrT, Wc, kDr,p]) # correct mass matrix caclulation
-			ma_array,mv = np.linalg.eigh(mn) # reout of masses^2 from eigenvalues of mn
+			M = np.dot(X,(X.T))/L # why this factor of L?? Can't find justification....
+			mn = 2.*reduce(np.dot, [kDr,p,M,p.T,kDr.T]) 
+			ma_array,mv = np.linalg.eig(mn) # reout of masses^2 from eigenvalues of mn
 			ma_array = np.sqrt(ma_array)
 		
 		####################################################################
@@ -178,40 +204,39 @@ class ModelClass(object):
 
 		if mo == 2:
 			# hyper is a0,sa,mlow,mup
-			kmin=self.hyper[1]
-			kmax=self.hyper[2]
-			mmin=self.hyper[3]
-			mmax=self.hyper[4]
+			betaM=self.hyper[1]
+			betaK=self.hyper[2]
+			kmin=self.hyper[3]
+			kmax=self.hyper[4]
+			mmin=self.hyper[5]
+			mmax=self.hyper[6]
 
 			######################################
 			####          Kahler              ####
 			######################################
-
-			k = (np.random.uniform(kmin,kmax,(n,n))) #random matrix k from log normal distribution
-			kk = np.exp(-k)
-			kT = kk.transpose() # transpose of random matrix k
-			k2 = np.dot(kk,kT)  # Construction of symmeterised Kahler matric for real axion fields
-			ev,pT = np.linalg.eigh(k2) # calculation of eigen values and eigen vectors
-			fef = np.sqrt(2*ev)
-			fef2=np.log(fef)
-			p = pT.transpose() # tranpose of rotational matrix constructed of eigen vectors
-			kD = reduce(np.dot, [p, k2, pT]) #diagonalisation of Kahler metric
-			kD[kD < 1*10**-13] = 0 # removal of computational error terms in off diagonal elements
-			kDr = np.zeros((n, n))#creation of empty 3x3 matrix
-			np.fill_diagonal(kDr, (1/((2**0.5)*np.sqrt(ev))))# matrix for absolving eigen values of kahler metric into axion fields
-			#kDr[kDr > 1*10**23] = 0 # remove computational errors in reciprocal matrix
-			kDrT = kDr.transpose() # trasnpos
+			LK=int(n/betaK)
+			LM=int(n/betaM)
+			k = (np.random.uniform(kmin,kmax,(n,LK))) #random matrix k from log flat distribution
+			k = 10.**k
+			k2 = np.dot(k,k.T)/LK # Factor of L  
+			ev,p = np.linalg.eig(k2) 
+			fef = np.sqrt(2.*ev)
+			fmat = np.zeros((n,n))
+			np.fill_diagonal(fmat,fef)
+#			kD = reduce(np.dot, [p.T, k2, p]) #diagonalisation of Kahler metric
+#			kD[kD < 1*10**-13] = 0 # removal of computational error terms in off diagonal elements
+			kDr = np.zeros((n, n))
+			np.fill_diagonal(kDr, (1./(fef)))
 
 			######################################
 			####            Mass              ####
 			######################################
 
-			m = (np.random.uniform(mmin,mmax,(n,n))) #random matrix m from log flat
-			mm = np.exp(-m)
-			mT = mm.transpose() # transpose of random matrix m
-			m2 = np.dot(mm,mT) # symmeterised mass matrix from real axion fields
-			mn = reduce(np.dot, [pT,kDrT, m2, kDr,p]) # correct mass matrix caclulation
-			ma_array,mv = np.linalg.eigh(mn) # reout of masses^2 from eigenvalues of mn
+			m = (np.random.uniform(mmin,mmax,(n,LM))) #random matrix m from log flat
+			m = 10.**m
+			m2 = np.dot(m,m.T) /LM # Factor of L
+			mn = 2.*reduce(np.dot, [kDr,p,m2,p.T,kDr.T]) 
+			ma_array,mv = np.linalg.eig(mn) 
 			ma_array = np.sqrt(ma_array)
 			
 		####################################################################
@@ -222,33 +247,40 @@ class ModelClass(object):
 		###################################################################
 
 		if mo == 3:
-
-			F=self.hyper[1]
-			Lambda = self.hyper[2]
-			smin=self.hyper[3]
-			smax=self.hyper[4]
-			Ntildemax=self.hyper[5]
-			#flag = self.hyper[6]
-			#a0=self.hyper[7]
-
+			
+			# DM: since F and Lambda appear in exactly the same way, I am 
+			# reducing the number of params and sampling only in (FL^3)
+			# Setting L=1 and F=m_{3/2}M_{pl}/M_H^2
+			FL3=self.hyper[1]
+			#Lambda = self.hyper[2]
+			smin=self.hyper[2]
+			smax=self.hyper[3]
+			Ntildemax=self.hyper[4]
+			betaM=self.hyper[5]
+		
 			# I am setting a0 to 1 here: I think there are implicit units!
 			a0=1.
 
-		######################################
-		####          Kahler              ####
-		######################################
+			remove_tachyons=True
+			######################################
+			####          Kahler              ####
+			######################################
 		
 			s = np.random.uniform(smin,smax,n)
-			#s = np.random.randn(smax,n)
-			#k = np.tensordot(1/s,1/s,axes=0) # This is not strictly positive definite!!
+			
+			###############################
+			# General tensor dot case
+			#k = np.tensordot(a0/s,a0/s,axes=0) # This is not strictly positive definite!!
+			###############################
 			k = np.zeros((n,n))
 			np.fill_diagonal(k,a0*a0/s/s)
-			ev,pT = np.linalg.eig(k) # calculation of eigen values and eigen vectors
+			ev,p = np.linalg.eig(k) # calculation of eigenvalues and eigenvectors
 			fef = np.sqrt(np.abs(2.*ev))
-			p = pT.transpose() # tranpose of rotational matrix constructed of eigen vectors
-			kDr = np.zeros((n, n))#creation of empty 3x3 matrix
-			np.fill_diagonal(kDr, (1/fef))# matrix for absolving eigen values of kahler metric into axion fields
-
+			fmat = np.zeros((n,n))
+			np.fill_diagonal(fmat,fef)
+			kDr = np.zeros((n, n))
+			np.fill_diagonal(kDr, (1./(fef)))
+					
 			######################################
 			####            Mass              ####
 			######################################
@@ -262,28 +294,43 @@ class ModelClass(object):
 			#	b = [1]*n
 			#	Ntilde = np.random.uniform(0,Ntildemax,size=(n,n))			
 			#else:
-			b = [1.]*n # instanton charges
-			Ntilde = np.zeros((n, n)) 
-			np.fill_diagonal(Ntilde, 2*np.pi*np.random.uniform(Ntildemax,size=n)) # Assume diagonal N in gauge kinetic
-		
+			#	b = [1]*n
+			#	Ntilde = np.zeros((n, n))
+				#np.fill_diagonal(b, 2*np.pi*np.random.randint(Imax,size=n))
+			#	np.fill_diagonal(Ntilde, 2*np.pi*np.random.randint(Ntildemax,size=n))
+				
 			##########################
 			
-			Sint = np.multiply(b,np.dot(Ntilde,s))
+			L = int(n/betaM)
+			Ntilde = np.random.uniform(0,Ntildemax,size=(n,L))			
+			Sint = np.dot(s,Ntilde)
 			Esint = np.exp(-Sint/2.)
 			Idar = n*[1.]
-			Cb = np.multiply(np.dot(Ntilde,Idar),b)
-			A = np.sqrt(F*Lambda*Lambda*Lambda)*reduce(np.multiply,[np.sqrt(Cb),Esint,b,np.transpose(Ntilde)])
-			#print 'IN MODEL CLASS', Sint,Esint,Idar,Cb
-			AT = np.transpose(A)
-			m = np.dot(A,AT)
-			mn = reduce(np.dot, [pT,kDr, m, kDr,p]) # correct mass matrix calculation
-			ma_array2,mv = np.linalg.eig(mn)
-			#print 'IN MODEL CLASS', ma_array2
-			#flag = poscheck(ma_array2)
-			ma_array = np.sqrt(np.abs(ma_array2))
-			#### The chance of having negative eigenvalues might crash the code, 
-			###  We do sqrt thing outside
-			###  So that we can check and discard any bad samples....
+			Cb = np.dot(Idar,Ntilde)
+					
+			#A = 2.*np.sqrt(F*Lambda*Lambda*Lambda)*reduce(np.multiply,[Cb,Esint,Ntilde]) 
+			A = 2.*np.sqrt(FL3)*reduce(np.multiply,[Cb,Esint,Ntilde]) 
+			
+			m = np.dot(A,A.T)/L # factor of L as for Marchenko-Pastur. Correct?
+			mn = 2.*reduce(np.dot, [kDr,p,m,p.T,kDr.T]) 
+			ma_array,mv = np.linalg.eigh(mn) 
+			#print 'eigs = (m/M_H)^2', ma_array
+			
+			######################################
+			# Note on eigenvalues
+			######################################
+			# We use eigh here: numerical error is making mn non-symmetric, even though it is mathematically symmetric
+			# eigh assumes Hermitian and returns real eigenvectors. 
+			# Still have a problem of tachyons from numerical error.
+			# Using "remove tachyons" removes them from spectrum, otherwise, we use abs and assume they are positive.
+			#####################################
+			
+			# remove any tachyons by setting to zero "as if decayed"
+			if remove_tachyons:
+				ma_array[ma_array<0]=0.
+			
+			ma_array = np.sqrt(np.abs(ma_array))
+
 
 
 		####################################################################
@@ -295,34 +342,35 @@ class ModelClass(object):
 
 		if mo == 4:
 			
-			c=self.hyper[1]
-			a0=self.hyper[2]
-			b0=self.hyper[3]
+			betaM=self.hyper[1]
+			betaK=self.hyper[2]
+			a0=self.hyper[3]
+			b0=self.hyper[4]
 			
 			######################################
 			####          Kahler              ####
 			######################################
 
-			L=int(n/c)
-			K  = a0*(np.random.randn(n, L))
-			Kc = np.dot(K,(K.T))/L
-			ev,pT = np.linalg.eig(Kc) 
-			fef = np.sqrt(np.abs(2.*ev))	 
-			p = pT.transpose() 
-			kD = reduce(np.dot, [p, Kc, pT]) 
+			LK=int(n/betaK)
+			LM=int(n/betaM)
+			k  = a0*(np.random.randn(n, LK))
+			k2 = np.dot(k,(k.T))/LK # Factor of L
+			ev,p = np.linalg.eig(k2) 
+			fef = np.sqrt(np.abs(2.*ev))
+			fmat = np.zeros((n,n))
+			np.fill_diagonal(fmat,fef)	 
+			kD = reduce(np.dot, [pT, k2, p]) 
 			kD[kD < 1*10**-13] = 0 
 			kDr = np.zeros((n, n)) 
-			np.fill_diagonal(kDr, 1/fef)
-			#kDr[kDr > 1*10**23] = 0 
-			kDrT = kDr.transpose()
+			np.fill_diagonal(kDr, 1./(fef))
 			
 			######################################
 			####            Mass              ####
 			######################################
 			
-			X = b0*(np.random.randn(n, L)) 
-			Wc = np.dot(X,(X.T))/L
-			mn = reduce(np.dot, [pT,kDrT, Wc, kDr,p]) 
+			m = b0*(np.random.randn(n, LM)) 
+			M = np.dot(m,(m.T))/LM # Factor of L
+			mn = 2.*reduce(np.dot, [kDr,p,M,p.T,kDr.T]) 
 			eigs,mv = np.linalg.eig(mn) 
 			ma_array=np.sqrt(eigs)
 			
@@ -345,17 +393,20 @@ class ModelClass(object):
 			######################################
 	
 			k = (np.random.uniform(kmin,kmax,(n))) 
-			kk = np.exp(k) 
-			fef=np.sqrt(kk)
+			k = 10.**k 
+			fef=np.sqrt(2.*k)
+			fmat = np.zeros((n,n))
+			np.fill_diagonal(fmat,fef)
+			p=1.
 					
 			######################################
 			####            Mass              ####
 			######################################
 			
 			m = (np.random.uniform(mmin,mmax,(n))) 
-			mm = np.exp(m)
-			ma_array=np.sqrt(mm)
-			mv=1
+			m = 10.**m
+			ma_array=np.sqrt(2.*m)
+			mv=1.
 	
 				
 			####################################################################
@@ -365,15 +416,27 @@ class ModelClass(object):
 		phidotin = config.getfloat('Initial Conditions','phidot_in')
 		phiin_array = rd.uniform(0.,phi_range,n)
 
-		for i in range (0,n):
-			phiin_array[i] = phiin_array[i]*fef[i]
-		phiin_array=np.dot(mv,phiin_array)
-		phidotin_array = [phidotin]*n #### array of phidotin where all are set equal to zero
+		if self.init:
+			# Set initial conditions as cubic lattice in basis where K is diag.
+			phiin_array=reduce(np.dot,[mv,fmat,phiin_array])
+		else:
+			# General basis is cubic lattice.
+			phiin_array=reduce(np.dot,[mv,fmat,p,phiin_array])
+		
+		phidotin_array = [phidotin]*n 
+		
+		if self.remove:
+			# Set masses that fail the cut to be zero.
+			# This is "as if those axions decayed", because our i.c.'s remove them from the spectrum.
+			ma_array[np.log10(ma_array)-quasi.mcut>0.]=0.
+			
 		
 		return n,ma_array,phiin_array,phidotin_array
-		
+
+########################################
+# Read and return non-axion parameters
+#######################################		
 				
-		
 	def inits(self):
 		""" Initial conditions"""
 				

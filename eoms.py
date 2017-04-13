@@ -10,6 +10,7 @@ def rhoinitial(phidotin_array,phiin_array,ma_array,n):
 	rhoin_array=[]
 	for i in range(n):	
 		rhoin_array.append( 0.5*phidotin_array[i]**2 + 0.5*(ma_array[i]**2)*phiin_array[i]**2 )
+	#print 'test print rhoinit', rhoin_array
 	return rhoin_array
 	
 ###################################################################	
