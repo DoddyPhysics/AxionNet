@@ -324,12 +324,15 @@ class ModelClass(object):
 			# Using "remove tachyons" removes them from spectrum, otherwise we use abs and assume they are positive.
 			# This is caused by the large spread in eigenvalues in the Mtheory model.
 			# See note in stack overflow: http://stackoverflow.com/questions/36819739/scipy-eigh-gives-negative-eigenvalues-for-positive-semidefinite-matrix
-			# Try this to do better, btu we may be screwed:
+			# Try this to do better, but we may be screwed:
 			# http://stackoverflow.com/questions/6876377/numpy-arbitrary-precision-linear-algebra
 			#####################################
-			
+			#print ma_array, 'bare masses'
+				
 			# remove any tachyons by setting to zero "as if decayed"
 			if remove_tachyons:
+				tachyons=ma_array[ma_array<0]
+				print np.shape(tachyons), 'number of tachyons'
 				ma_array[ma_array<0]=0.
 			
 			ma_array = np.sqrt(np.abs(ma_array))
@@ -431,6 +434,8 @@ class ModelClass(object):
 		if self.remove:
 			# Set masses that fail the cut to be zero.
 			# This is "as if those axions decayed", because our i.c.'s remove them from the spectrum.
+			#cut_masses=ma_array[np.log10(ma_array*quasi.MH)-quasi.mcut>0.]
+			#print np.shape(cut_masses), 'cut mass'
 			ma_array[np.log10(ma_array*quasi.MH)-quasi.mcut>0.]=0.
 			
 		
