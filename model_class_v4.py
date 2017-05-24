@@ -54,7 +54,7 @@ class ModelClass(object):
 			elif self.modnum == 2:
 				self.parnum = 7
 			elif self.modnum == 3:
-				self.parnum = 6
+				self.parnum = 7
 			elif self.modnum == 4:
 				self.parnum = 5
 			elif self.modnum == 5:
@@ -88,11 +88,12 @@ class ModelClass(object):
 			elif self.modnum == 3:
 				F = config.getfloat('Hyperparameter','F')
 				Lambda = config.getfloat('Hyperparameter','Lambda')
-				smin = config.getfloat('Hyperparameter','smin')
-				smax = config.getfloat('Hyperparameter','smax')
-				Ntildemax = config.getfloat('Hyperparameter','Ntildemax')
+				sbar = config.getfloat('Hyperparameter','sbar')
+				svar = config.getfloat('Hyperparameter','svar')
+				Nbar = config.getfloat('Hyperparameter','Nbar')
+				Nvar = config.getfloat('Hyperparameter','Nvar')
 				betaM = config.getfloat('Hyperparameter','betaM')
-				self.hyper=np.vstack((nax,F,Lambda,smin,smax,Ntildemax,betaM))
+				self.hyper=np.vstack((nax,F,Lambda,sbar,svar,Nbar,Nvar,betaM))
 			elif self.modnum == 4:
 				betaK = config.getfloat('Hyperparameter','betaK')
 				betaM = config.getfloat('Hyperparameter','betaM')
@@ -251,22 +252,30 @@ class ModelClass(object):
 			# DM: since F and Lambda appear in exactly the same way, I am 
 			# reducing the number of params and sampling only in (FL^3)
 			# Setting L=1 and F=m_{3/2}M_{pl}/M_H^2
+			# setting N and s as Gaussian priors
 			FL3=self.hyper[1]
 			#Lambda = self.hyper[2]
-			smin=self.hyper[2]
-			smax=self.hyper[3]
-			Ntildemax=self.hyper[4]
-			betaM=self.hyper[5]
+			sbar=self.hyper[2]
+			svar=self.hyper[3]
+			Nbar=self.hyper[4]
+			Nvar=self.hyper[5]
+			betaM=self.hyper[6]
 		
 			# I am setting a0 to 1 here: I think there are implicit units!
 			a0=1.
+			
+			# First set the random vectors for modulus and instanton charges
+			# Here Gaussian, and absolute value for positive
+			L = int(n/betaM)
+			s = np.abs(np.random.normal(sbar,svar,n))
+			Ntilde = np.abs(np.random.normal(Nbar,Nvar,size=(n,L)))			
 
 			remove_tachyons=True
 			######################################
 			####          Kahler              ####
 			######################################
 		
-			s = np.random.uniform(smin,smax,n)
+			
 			
 			###############################
 			# General tensor dot case
@@ -301,8 +310,8 @@ class ModelClass(object):
 				
 			##########################
 			
-			L = int(n/betaM)
-			Ntilde = np.random.uniform(0,Ntildemax,size=(n,L))			
+
+
 			Sint = np.dot(s,Ntilde)
 			Esint = np.exp(-Sint/2.)
 			Idar = n*[1.]
