@@ -62,7 +62,7 @@ if startFile:
 else:
 	# Uniform starts
 	# Match these to the prior if using e.g. log-flat
-	pos = [[np.random.uniform(lFL3min,lFL3max),np.random.uniform(sbarl,sbaru),np.random.uniform(svarl,svaru),
+	pos = [[np.random.uniform(lFL3min,lFL3max),np.random.uniform(sbarl,sbaru),np.random.uniform(svarl,svaru)
 		,np.random.uniform(Nbarl,Nbaru),np.random.uniform(Nvarl,Nvaru),np.random.uniform(betamin,betamax)] for i in range(nwalkers)]
 
 ##############################
