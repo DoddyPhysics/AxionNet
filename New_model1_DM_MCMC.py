@@ -26,25 +26,22 @@ if debugging:
 # This is not idiot proof!
 
 # Model selection
-run_name='New_Mtheory_nax20_DM_run1'
+run_name='New_model1_nax20_DM_run1'
 nax=20
-model=3
+model=1
 
 # Sampler parameters
 # ndim must be correct for the model!
 # nsteps is the number of steps before each save
-ndim, nwalkers, nsteps = 6, 20, 1
+ndim, nwalkers, nsteps = 3, 20, 1
 # repeat numiter times
 numiter=25000 # iterate the sampler
 # total steps = nwalkers*nsteps*numiter
 
 # Priors
-lFL3min,lFL3max=100.,115.
-sbarl,sbaru=10.,30.
-svarl,svaru=0.1,5.
-Nbarl,Nbaru=0.4,1.0
-Nvarl,Nvaru=0.01,0.1
 betamin,betamax=0.,1.
+lsigmin,lsigmax=3.,8.
+lfmin,lfmax=-3.,0.
 
 
 # Starting position
@@ -62,18 +59,17 @@ if startFile:
 else:
 	# Uniform starts
 	# Match these to the prior if using e.g. log-flat
-	pos = [[np.random.uniform(lFL3min,lFL3max),np.random.uniform(sbarl,sbaru),np.random.uniform(svarl,svaru)
-		,np.random.uniform(Nbarl,Nbaru),np.random.uniform(Nvarl,Nvaru),np.random.uniform(betamin,betamax)] for i in range(nwalkers)]
+	pos = [[np.random.uniform(betamin,betamax),np.random.uniform(lsigmin,lsigmax),np.random.uniform(lfmin,lfmax)] for i in range(nwalkers)]
 
 ##############################
 # Likelihood and prior functions
 ##############################
 
 def lnprior(theta):
-	lFL3,sbar,svar,Nbar,Nvar,beta = theta
+	beta,lsig,lf = theta
 		
 	# Flat priors on parameters
-	if lFL3min<lFL3<lFL3max and sbarl<sbar<sbaru and svarl<svar<svaru and Nbarl<Nbar<Nbaru and Nvarl<Nvar<Nvaru and betamin<beta<betamax:
+	if betamin<beta<betamax and lsigmin<lsig<lsigmax and lfmin<lf<lfmax:
 		if debugging:
 			print 'lnprior = ', 0.0
 		return 0.0
@@ -87,17 +83,17 @@ def lnprior(theta):
 
 def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 		
-	lFL3,sbar,svar,Nbar,Nvar,beta = theta
+	beta,lsig,lf = theta
 	if debugging:
 		start = time.time()
-		print 'in likelihood, params   ',lFL3,smin,smax,N,beta
+		print 'in likelihood, params   ',beta,lsig,lf
 	# Initialise the naxion model
 	# Hypervec must be correct for the model number, and match the params in theta
 	# There is probably an idiot proof way to do this, but for now you have to think!
 	
 	my_calculator = naxion.hubble_calculator(ifsampling=True,
 		fname='configuration_card_DM.ini',mnum=model,init_Kdiag=True,remove_masses=True,
-		hypervec=(nax,10.**lFL3,sbar,svar,Nbar,Nvar,beta))
+		hypervec=(nax,beta,10.**lsig,10.**lf))
 
 	###############################################################################	
 	# Apply a "prior" to the log10(masses)
@@ -154,7 +150,7 @@ def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 
 
 	derivfile=open('Chains/'+run_name+'_derived.txt','a')
-	derivfile.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(lFL3,sbar,svar,Nbar,Nvar,beta,Hout,Ocout,add0,zout,lnlik))
+	derivfile.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(beta,lsig,lf,Hout,Ocout,add0,zout,lnlik))
 	derivfile.close()
 	
 	return lnlik
