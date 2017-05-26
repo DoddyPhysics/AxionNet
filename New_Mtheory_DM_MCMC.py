@@ -33,7 +33,7 @@ model=3
 # Sampler parameters
 # ndim must be correct for the model!
 # nsteps is the number of steps before each save
-ndim, nwalkers, nsteps = 5, 20, 1
+ndim, nwalkers, nsteps = 6, 20, 1
 # repeat numiter times
 numiter=25000 # iterate the sampler
 # total steps = nwalkers*nsteps*numiter
@@ -73,7 +73,7 @@ def lnprior(theta):
 	lFL3,sbar,svar,Nbar,Nvar,beta = theta
 		
 	# Flat priors on parameters
-	if lFL3min<lFL3<lFL3max and sbarl<sbar<sbaru and svarl<svar<svaru and Nbarl<Nbar<Nvbaru and Nvarl<Nvar<Nvaru and betamin<beta<betamax:
+	if lFL3min<lFL3<lFL3max and sbarl<sbar<sbaru and svarl<svar<svaru and Nbarl<Nbar<Nbaru and Nvarl<Nvar<Nvaru and betamin<beta<betamax:
 		if debugging:
 			print 'lnprior = ', 0.0
 		return 0.0
@@ -85,7 +85,7 @@ def lnprior(theta):
 # 		The Likelihood					#
 #########################################
 
-def lnlike(theta, H0,sigH, Om,sigOm,zeq,sigZ):
+def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 		
 	lFL3,sbar,svar,Nbar,Nvar,beta = theta
 	if debugging:
@@ -154,7 +154,7 @@ def lnlike(theta, H0,sigH, Om,sigOm,zeq,sigZ):
 
 
 	derivfile=open('Chains/'+run_name+'_derived.txt','a')
-	derivfile.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(Hout,Ocout,add0,zout,sbar,Nbar,Hout,Omout,add0,zout,lnlik))
+	derivfile.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(lFL3,sbar,svar,Nbar,Nvar,beta,Hout,Ocout,add0,zout,lnlik))
 	derivfile.close()
 	
 	return lnlik
@@ -162,14 +162,14 @@ def lnlike(theta, H0,sigH, Om,sigOm,zeq,sigZ):
 #############################################################################
 
 
-def lnprob(theta, H0,sigH, Om,sigOm,zeq,sigZ):
+def lnprob(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 	lp = lnprior(theta)
 	
 	if not np.isfinite(lp):
 		# do not call the likelihood if the prior is infinite
 		return -np.inf
 
-	return lp + lnlike(theta, H0,sigH, Om,sigOm,zeq,sigZ)
+	return lp + lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ)
 
 
 #########################################
@@ -178,7 +178,7 @@ def lnprob(theta, H0,sigH, Om,sigOm,zeq,sigZ):
 
 
 print 'running, iteration =  ',0.,'  of  ',numiter
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH, Om,sigOm,zeq,sigZ))
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH, Och2,sigOc,zeq,sigZ))
 if debugging:
 	print 'running MCMC'
 sampler.run_mcmc(pos, nsteps, rstate0=np.random.get_state())
