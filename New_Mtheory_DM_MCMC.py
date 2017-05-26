@@ -70,7 +70,7 @@ else:
 ##############################
 
 def lnprior(theta):
-	lFL3,smin,smax,N,beta = theta
+	lFL3,sbar,svar,Nbar,Nvar,beta = theta
 		
 	# Flat priors on parameters
 	if lFL3min<lFL3<lFL3max and sbarl<sbar<sbaru and svarl<svar<svaru and Nbarl<Nbar<Nvbaru and Nvarl<Nvar<Nvaru and betamin<beta<betamax:
