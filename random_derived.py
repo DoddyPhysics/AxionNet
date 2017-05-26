@@ -3,6 +3,10 @@ Compute derived parameters from random samples from your chain.
 We also histogram the masses
 Will add histogram of initial phi vals as well
 
+There is now an option to get derived with your chain, so that step can be eliminated.
+(Derived params option in latest Mtheory Gaussian MCMC)
+This is still useful to histogram the masses from your chain.
+
 DJEM, April 2017
 """
 
@@ -23,8 +27,14 @@ run_name='Mtheory_nax20_DM_run1'
 nax=20
 model=3
 
-get_derived=True
+get_derived=False
 hist_masses=True
+
+##########################
+# Do you want to remove masses that fail the cut?
+# If you use remove=False in calculator to see full mass spectrum, derived will still work
+# but when the mass cut is failed you will get dummy fillvec
+##########################
 remove=True
 
 #############################
@@ -85,16 +95,11 @@ for i in range(Nsamps):
 	lFL3,smin,smax,Ntilde,beta=chain[j,:]
 	# Initialise calculator
 	my_calculator = naxion.hubble_calculator(ifsampling=True,init_Kdiag=True,remove_masses=remove,fname='configuration_card_DM.ini',mnum=model,
-		hypervec=(nax,10**lFL3,smin,smax,Ntilde,beta))
+		hypervec=(nax,10**lFL3,sbar,svar,Nbar,Nvar,betaM))
 
 	masses=my_calculator.ma_array*MH
 	masses=np.log10(masses)
 	massarray[i,:]=masses
-
-##########################
-# If you use remove_masses=False in calculator this step will still work
-# if you use get_derived
-##########################
 	
 	if get_derived:
 		#print 'computing derived params for sample=   ', i 

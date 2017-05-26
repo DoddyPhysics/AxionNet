@@ -28,7 +28,11 @@ class hubble_calculator(object):
 				
 		myModel = model_class.ModelClass(fname=fname,ifsampling=ifsampling,init_Kdiag=init_Kdiag,remove_masses=remove_masses,
 		mnum=mnum,hypervec=hypervec)
-
+		
+		# Hard code the critical density and baryon density
+		self.rho_crit=3. 
+		self.ombh2=0.022
+		
 		self.n,self.ma_array,self.phiin_array,self.phidotin_array=myModel.getParams()
 		self.rho_m0,self.rhol,self.rho_r0=myModel.cosmo()
 		self.ain,self.tin,self.tfi=myModel.inits()
@@ -118,9 +122,6 @@ class hubble_calculator(object):
 		self.z = output.redshift(self.y, self.N)
 		#pos = len(self.z[self.z>=0])-1 # last positive z index
 		inds=np.where(self.z<0)[0] # first negative z index
-		#print "checking z def"
-		#print "Chakrit:", pos,self.z[pos]
-		#print "Doddy",inds[0],self.z[inds[0]]
 		pos=inds[0]
 		if np.shape(inds)[0]==0:
 			# return dummy values if z=0 is not found
@@ -140,16 +141,21 @@ class hubble_calculator(object):
 		self.add0=self.add[pos]
 		# Split the axion density into DM and DE
 		self.rhoDMa,self.rhoDEa=output.darkflow(self.y,self.N,self.n)
+		# Subtract the baryons to get the CDM density
+		self.rhoCDM=self.rhom-self.rho_crit*self.ombh2*(1.+self.z)**3.
 		self.totM=self.rhom+self.rhoDMa
+		self.totDM=self.rhoCDM+self.rhoDMa
 		self.totDE=self.rholl+self.rhoDEa
-		# Compute Omegas in matter and DE
+		# Compute Omch2 and OmM
 		self.rhor0=self.rhor[pos]
 		self.rhom0=self.totM[pos]
 		self.rhoDE0=self.totDE[pos]
+		self.Omch2=self.totDM[pos]/self.rho_crit 
 		self.OmM=self.rhom0/(self.rhom0+self.rhoDE0+self.rhor0)
 		# Equality
 		self.zeq=output.zeq(self.z,self.totM,self.rhor)
-		return self.H0,self.OmM,self.add0,self.zeq
+		#return self.H0,self.OmM,self.add0,self.zeq # use this for DE models, where you care about OmM (DM is fixed)
+		return self.H0,self.Omch2,self.add0,self.zeq # use this for DM models, where you care about Omch2 (Lambda is fixed)
 		
 
 ############################

@@ -86,14 +86,13 @@ class ModelClass(object):
 				mmax = config.getfloat('Hyperparameter','mmax')
 				self.hyper=np.vstack((nax,betaK,betaM,kmin,kmax,mmin,mmax))
 			elif self.modnum == 3:
-				F = config.getfloat('Hyperparameter','F')
-				Lambda = config.getfloat('Hyperparameter','Lambda')
+				FL3 = config.getfloat('Hyperparameter','FL3')
 				sbar = config.getfloat('Hyperparameter','sbar')
 				svar = config.getfloat('Hyperparameter','svar')
 				Nbar = config.getfloat('Hyperparameter','Nbar')
 				Nvar = config.getfloat('Hyperparameter','Nvar')
 				betaM = config.getfloat('Hyperparameter','betaM')
-				self.hyper=np.vstack((nax,F,Lambda,sbar,svar,Nbar,Nvar,betaM))
+				self.hyper=np.vstack((nax,FL3,sbar,svar,Nbar,Nvar,betaM))
 			elif self.modnum == 4:
 				betaK = config.getfloat('Hyperparameter','betaK')
 				betaM = config.getfloat('Hyperparameter','betaM')
@@ -191,7 +190,7 @@ class ModelClass(object):
 			L=int(n/betaM)
 			X = b0*(np.random.randn(n, L)) 
 			M = np.dot(X,(X.T))/L # why this factor of L?? Can't find justification....
-			mn = 2.*reduce(np.dot, [kDr,p,M,p.T,kDr.T]) 
+			mn = reduce(np.dot, [kDr,p,M,p.T,kDr.T]) 
 			ma_array,mv = np.linalg.eig(mn) # reout of masses^2 from eigenvalues of mn
 			ma_array = np.sqrt(ma_array)
 		
@@ -252,38 +251,43 @@ class ModelClass(object):
 			# DM: since F and Lambda appear in exactly the same way, I am 
 			# reducing the number of params and sampling only in (FL^3)
 			# Setting L=1 and F=m_{3/2}M_{pl}/M_H^2
-			# setting N and s as Gaussian priors
 			FL3=self.hyper[1]
-			#Lambda = self.hyper[2]
 			sbar=self.hyper[2]
 			svar=self.hyper[3]
 			Nbar=self.hyper[4]
 			Nvar=self.hyper[5]
 			betaM=self.hyper[6]
 		
-			# I am setting a0 to 1 here: I think there are implicit units!
+			# I am setting a0 to 1 here
 			a0=1.
 			
 			# First set the random vectors for modulus and instanton charges
 			# Here Gaussian, and absolute value for positive
 			L = int(n/betaM)
 			s = np.abs(np.random.normal(sbar,svar,n))
-			Ntilde = np.abs(np.random.normal(Nbar,Nvar,size=(n,L)))			
+			Ntilde = np.abs(np.random.normal(Nbar,Nvar,size=(n,L)))	
+			
+			# Alternative flat priors
+			#smin=self.hyper[2]
+			#smax=self.hyper[3]
+			#Nmin=self.hyper[4]
+			#Nmax=self.hyper[5]
+			#betaM=self.hyper[6]
+			#s=np.random.uniform(smin,smax,n)
+			#N=np.random.uniform(Nmin,Nmax,size=(n,L))		
 
 			remove_tachyons=True
 			######################################
 			####          Kahler              ####
 			######################################
-		
-			
-			
+					
 			###############################
 			# General tensor dot case
 			#k = np.tensordot(a0/s,a0/s,axes=0) # This is not strictly positive definite!!
 			###############################
 			k = np.zeros((n,n))
 			np.fill_diagonal(k,a0*a0/s/s)
-			ev,p = np.linalg.eig(k) # calculation of eigenvalues and eigenvectors
+			ev,p = np.linalg.eig(k) 
 			fef = np.sqrt(np.abs(2.*ev))
 			fmat = np.zeros((n,n))
 			np.fill_diagonal(fmat,fef)
@@ -294,6 +298,7 @@ class ModelClass(object):
 			####            Mass              ####
 			######################################
 			
+			# Some old version
 			#if Idist == 1:
 				#b = [2*np.pi*np.random.randint(Imax,size=n)]
 			#	b = [1]*n
@@ -309,20 +314,18 @@ class ModelClass(object):
 			#	np.fill_diagonal(Ntilde, 2*np.pi*np.random.randint(Ntildemax,size=n))
 				
 			##########################
-			
-
 
 			Sint = np.dot(s,Ntilde)
 			Esint = np.exp(-Sint/2.)
 			Idar = n*[1.]
 			Cb = np.sqrt(np.dot(Idar,Ntilde))
 					
-			#A = 2.*np.sqrt(F*Lambda*Lambda*Lambda)*reduce(np.multiply,[Cb,Esint,Ntilde]) 
 			A = 2.*np.sqrt(FL3)*reduce(np.multiply,[Cb,Esint,Ntilde]) 
 
-			m = np.dot(A,A.T)/L # factor of L as for Marchenko-Pastur. Correct?
+			m = np.dot(A,A.T)/L # factor of L as for Marchenko-Pastur. This rescales the params.
 			mn = 2.*reduce(np.dot, [kDr,p,m,p.T,kDr.T]) 
 			ma_array,mv = np.linalg.eigh(mn) 
+			
 			
 			######################################
 			# Note on eigenvalues
@@ -341,7 +344,7 @@ class ModelClass(object):
 			# remove any tachyons by setting to zero "as if decayed"
 			if remove_tachyons:
 				tachyons=ma_array[ma_array<0]
-				print np.shape(tachyons), 'number of tachyons'
+				#print np.shape(tachyons), 'number of tachyons'
 				ma_array[ma_array<0]=0.
 			
 			ma_array = np.sqrt(np.abs(ma_array))
@@ -430,7 +433,7 @@ class ModelClass(object):
 		phi_range = config.getfloat('Initial Conditions','phi_in_range')
 		phidotin = config.getfloat('Initial Conditions','phidot_in')
 		phiin_array = rd.uniform(0.,phi_range,n)
-
+		
 		if self.init:
 			# Set initial conditions as cubic lattice in basis where K is diag.
 			phiin_array=reduce(np.dot,[mv,fmat,phiin_array])
@@ -442,12 +445,17 @@ class ModelClass(object):
 		
 		if self.remove:
 			# Set masses that fail the cut to be zero.
-			# This is "as if those axions decayed", because our i.c.'s remove them from the spectrum.
-			#cut_masses=ma_array[np.log10(ma_array*quasi.MH)-quasi.mcut>0.]
-			#print np.shape(cut_masses), 'cut mass'
+			# This is "as if those axions decayed"
+			# because when m=0 i.c.'s with phidot=0 remove them from the energy density.
+			######
+			# If you want to see the cut masses:
+			# cut_masses=ma_array[np.log10(ma_array*quasi.MH)-quasi.mcut>0.]
+			# print np.shape(cut_masses), 'cut mass'
+			######
 			ma_array[np.log10(ma_array*quasi.MH)-quasi.mcut>0.]=0.
-			
 		
+		#print ma_array
+		#print phiin_array
 		return n,ma_array,phiin_array,phidotin_array
 
 ########################################
