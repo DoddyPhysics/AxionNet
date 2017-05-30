@@ -6,7 +6,9 @@ from quasi_observable_data import *
 
 debugging = False
 derived=True # quick hack for derived params
-run_name='New_Mtheory_nax20_DM_run1'
+run_name='New_Mtheory_nax20_DM_run2'
+startFile=True
+startChainFile='Chains/New_Mtheory_nax20_DM_run1.npy'
 
 
 
@@ -26,7 +28,6 @@ if debugging:
 # This is not idiot proof!
 
 # Model selection
-run_name='New_Mtheory_nax20_DM_run1'
 nax=20
 model=3
 
@@ -45,11 +46,6 @@ svarl,svaru=0.1,5.
 Nbarl,Nbaru=0.4,1.0
 Nvarl,Nvaru=0.01,0.1
 betamin,betamax=0.,1.
-
-
-# Starting position
-startFile=False
-startChainFile='Chains/New_Mtheory_nax20_DM_run1.npy'
 
 ##################################
 # Starting position of walkers
@@ -90,7 +86,7 @@ def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 	lFL3,sbar,svar,Nbar,Nvar,beta = theta
 	if debugging:
 		start = time.time()
-		print 'in likelihood, params   ',lFL3,smin,smax,N,beta
+		print 'in likelihood, params   ',lFL3,sbar,svar,Nbar,Nvar,beta
 	# Initialise the naxion model
 	# Hypervec must be correct for the model number, and match the params in theta
 	# There is probably an idiot proof way to do this, but for now you have to think!
@@ -151,7 +147,6 @@ def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 	#############################################################################
 
 	# write derived params and likelihood and to file
-
 
 	derivfile=open('Chains/'+run_name+'_derived.txt','a')
 	derivfile.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(lFL3,sbar,svar,Nbar,Nvar,beta,Hout,Ocout,add0,zout,lnlik))
