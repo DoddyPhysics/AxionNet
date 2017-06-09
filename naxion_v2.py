@@ -154,13 +154,12 @@ class hubble_calculator(object):
 		self.OmM=self.rhom0/(self.rhom0+self.rhoDE0+self.rhor0)
 		# Equality
 		self.zeq=output.zeq(self.z,self.totM,self.rhor)
-		#return self.H0,self.OmM,self.add0,self.zeq # use this for DE models, where you care about OmM (DM is fixed)
-		return self.H0,self.Omch2,self.add0,self.zeq # use this for DM models, where you care about Omch2 (Lambda is fixed)
+		return self.H0,self.OmM,self.add0,self.zeq # use this is Om is quasi-obs
+		#return self.H0,self.Omch2,self.add0,self.zeq # use this if Omch2 is quasi-obs
 		
 
 ############################
-# Main routine runs on import (?)
-# it definitely runs from the commmand line
+# Main routine runs on import 
 # I don't use this for MCMC, and I run tests from test_sampler script.
 ##########################
 
