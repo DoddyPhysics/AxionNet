@@ -5,7 +5,7 @@ import naxion
 from quasi_observable_data import *
 
 debugging = False
-derived=True # quick hack for derived params
+derived=False # quick hack for derived params
 run_name='Example_Mtheory_run1'
 startFile=False
 startChainFile='Chains/Example_Mtheory_run1.npy'
@@ -36,15 +36,15 @@ model=3
 # nsteps is the number of steps before each save
 ndim, nwalkers, nsteps = 6, 20, 1
 # repeat numiter times
-numiter=25000 # iterate the sampler
+numiter=2500 # iterate the sampler
 # total steps = nwalkers*nsteps*numiter
 
 # Priors
-lFL3min,lFL3max=100.,115.
-sbarl,sbaru=10.,30.
-svarl,svaru=0.1,5.
-Nbarl,Nbaru=0.4,1.0
-Nvarl,Nvaru=0.01,0.1
+lFL3min,lFL3max=105.,106.
+sbarl,sbaru=20.,21.
+svarl,svaru=1.,1.5
+Nbarl,Nbaru=0.5,0.55
+Nvarl,Nvaru=0.01,0.02
 betamin,betamax=0.,1.
 
 ##################################
@@ -81,7 +81,7 @@ def lnprior(theta):
 # 		The Likelihood					#
 #########################################
 
-def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
+def lnlike(theta, H0,sigH, Om,sigOm,zeq,sigZ):
 		
 	lFL3,sbar,svar,Nbar,Nvar,beta = theta
 	if debugging:
@@ -134,12 +134,14 @@ def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 	else:
 		lnlikacc = -np.inf
 	
-	lnlik=lnlikH+lnlikOc+lnlikacc+lnlikZ
+	#lnlik=lnlikH+lnlikOc+lnlikacc+lnlikZ
+	lnlik=lnlikH+lnlikOm+lnlikacc+lnlikZ
+	
 	#############################################################################
 
 	# Return the product likelihood for Hubble, Om, acc, zeq
 	if debugging:
-		print 'in likelihood, obs=   ',	Hout,Ocout,add0,zout
+		print 'in likelihood, obs=   ',	Hout,Omout,add0,zout
 		end = time.time()
 		print 'elapsed time in  lik =   ',end-start	
 		print 'lnlik = ', lnlik
@@ -149,7 +151,7 @@ def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 	# write derived params and likelihood and to file
 
 	derivfile=open('Chains/'+run_name+'_derived.txt','a')
-	derivfile.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(lFL3,sbar,svar,Nbar,Nvar,beta,Hout,Ocout,add0,zout,lnlik))
+	derivfile.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(lFL3,sbar,svar,Nbar,Nvar,beta,Hout,Omout,add0,zout,lnlik))
 	derivfile.close()
 	
 	return lnlik
@@ -157,14 +159,14 @@ def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 #############################################################################
 
 
-def lnprob(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
+def lnprob(theta, H0,sigH, Om,sigOm,zeq,sigZ):
 	lp = lnprior(theta)
 	
 	if not np.isfinite(lp):
 		# do not call the likelihood if the prior is infinite
 		return -np.inf
 
-	return lp + lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ)
+	return lp + lnlike(theta, H0,sigH, Om,sigOm,zeq,sigZ)
 
 
 #########################################
@@ -173,7 +175,7 @@ def lnprob(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 
 
 print 'running, iteration =  ',0.,'  of  ',numiter
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH, Och2,sigOc,zeq,sigZ))
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH, Om,sigOm,zeq,sigZ))
 if debugging:
 	print 'running MCMC'
 sampler.run_mcmc(pos, nsteps, rstate0=np.random.get_state())
@@ -187,7 +189,7 @@ np.save('Chains/'+run_name+'.npy',chain)
 for i in range(1,numiter):
 	print 'running, iteration =  ',i,'  of  ',numiter
 	pos=chain[:,-1,:]
-	sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH,Och2,sigOc,zeq,sigZ))
+	sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(H0,sigH,Om,sigOm,zeq,sigZ))
 	if debugging:
 		print 'running MCMC'
 	sampler.run_mcmc(pos, nsteps, rstate0=np.random.get_state())

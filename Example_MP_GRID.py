@@ -87,7 +87,6 @@ def lnlike(mbar,fbar):
 # do a grid based likelihood on the two varying params
 
 for i in range(nsteps):
-
 	for j in range(nsteps):
 		x=xlist[i]
 		y=ylist[j]
