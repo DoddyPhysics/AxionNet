@@ -6,9 +6,9 @@ from quasi_observable_data import *
 
 debugging = False
 derived=True # quick hack for derived params
-run_name='New_Mtheory_nax20_DM_run2'
-startFile=True
-startChainFile='Chains/New_Mtheory_nax20_DM_run1.npy'
+run_name='Example_Mtheory_run1'
+startFile=False
+startChainFile='Chains/Example_Mtheory_run1.npy'
 
 
 
@@ -120,12 +120,12 @@ def lnlike(theta, H0,sigH, Och2,sigOc,zeq,sigZ):
 	# Solve e.o.m.'s for outputs only if mass cut is passed
 	my_calculator.solver()
 	# Output quasi-observables
-	Hout,Ocout,add0,zout=my_calculator.quasiObs()
+	Hout,Omout,add0,zout=my_calculator.quasiObs()
 	
 	# Define Gaussian likelihood on derived quasi observables
 	lnlikH = -0.5*((Hout-H0)**2./(sigH**2.) +np.log(2.*math.pi*sigH**2.) )
-	#lnlikOm = -0.5*((Omout-Om)**2./(sigOm**2.) +np.log(2.*math.pi*sigOm**2.) )
-	lnlikOc = -0.5*((Ocout-Och2)**2./(sigOc**2.) +np.log(2.*math.pi*sigOc**2.) )
+	lnlikOm = -0.5*((Omout-Om)**2./(sigOm**2.) +np.log(2.*math.pi*sigOm**2.) )
+	#lnlikOc = -0.5*((Ocout-Och2)**2./(sigOc**2.) +np.log(2.*math.pi*sigOc**2.) )
 	lnlikZ = -0.5*((zout-zeq)**2./(sigZ**2.) +np.log(2.*math.pi*sigZ**2.) )
 	
 	# Do a cut for "is the Universe accelerating"

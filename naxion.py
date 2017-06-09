@@ -14,7 +14,7 @@ import ConfigParser
 import eoms as eoms
 import output as output
 
-import model_class_v4 as model_class
+import model_class
 
 
 class hubble_calculator(object):
