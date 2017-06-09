@@ -2,17 +2,20 @@ import corner as triangle
 import numpy as np
 from matplotlib import rcParams
 
-run_name='model1_nax20_DE'
-chain=np.load('Chains/'+run_name+'.npy')
+run_name='Mtheory_nax20_DM_run1'
+chain=np.load(run_name+'.npy')
 nwalkers, nsteps,ndim = np.shape(chain)
 burnin = nsteps/4
 # Make sample chain removing burnin 
 combinedUSE=chain[:,burnin:,:].reshape((-1,ndim))
 
-# Priors, for plotting limits and binning
-fmin,fmax=0.,2.
+# Priors
+lFL3min,lFL3max=100.,115.
+sminl,sminu=10.,30.
+smaxl,smaxu=30.,100.
+Nmin,Nmax=0.5,1.
 betamin,betamax=0.,1.
-b0min,b0max=0.,1.5
+
 
 #################################
 # Plotting fonts
@@ -41,8 +44,10 @@ rc['legend.fontsize'] = F2
 
 bins=20
 # Linear binning for linear prior
-fbins=np.linspace(fmin,fmax,num=bins)
-b0bins=np.linspace(b0min,b0max,num=bins)
+lFbins=np.linspace(lFL3min,lFL3max,num=bins)
+sminbins=np.linspace(sminl,sminu,num=bins)
+smaxbins=np.linspace(smaxl,smaxu,num=bins)
+Nbins=np.linspace(Nmin,Nmax,num=bins)
 betabins=np.linspace(betamin,betamax,num=bins)
 
 #############################################
@@ -52,10 +57,11 @@ betabins=np.linspace(betamin,betamax,num=bins)
 combinedCOL='#7E1946'
 
 
-fig2 = triangle.corner(combinedUSE, labels=[r'$f/M_{pl}$', r'$\beta$',r'$\sqrt{\langle m^2}\rangle/M_H$'],
+fig2 = triangle.corner(combinedUSE, labels=[r'$\log_{10}F\Lambda^3$',r'$s_{\rm min}$',r'$s_{\rm max}$',r'$\widetilde{N}$',r'$\beta_\mathcal{M}$'],
 	color=combinedCOL,smooth1d=2,smooth=2.,plot_datapoints=False,
 	levels=(1-np.exp(-0.5),1-np.exp(-2.)),
-	density=True,range=[[fmin,fmax],[betamin,betamax],[b0min,b0max]],bins=[fbins,betabins,b0bins])
+	density=True,range=[[lFL3min,lFL3max],[sminl,sminu],[smaxl,smaxu],[Nmin,Nmax],[betamin,betamax]],
+	bins=[lFbins,sminbins,smaxbins,Nbins,betabins])
 	
 
 
