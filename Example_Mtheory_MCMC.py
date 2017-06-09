@@ -1,7 +1,7 @@
 import emcee
 import numpy as np
 import math
-import naxion_v2 as naxion
+import naxion
 from quasi_observable_data import *
 
 debugging = False
